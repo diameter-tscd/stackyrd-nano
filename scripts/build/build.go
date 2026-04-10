@@ -217,6 +217,38 @@ func installGarble(logger *Logger) error {
 	return cmd.Run()
 }
 
+// askUserAboutGarble asks user if they want to use garble with timeout
+func (ctx *BuildContext) askUserAboutGarble(logger *Logger) error {
+	fmt.Printf("%sUse garble build for obfuscation? (y/N, timeout %ds): %s", B_YELLOW, int(ctx.Config.Timeout.Seconds()), RESET)
+
+	// Create a channel to receive user input
+	inputChan := make(chan string, 1)
+
+	// Start a goroutine to read input
+	go func() {
+		var choice string
+		fmt.Scanln(&choice)
+		inputChan <- choice
+	}()
+
+	// Wait for input or timeout
+	select {
+	case choice := <-inputChan:
+		if strings.ToLower(choice) == "y" || strings.ToLower(choice) == "yes" {
+			ctx.Config.UseGarble = true
+			logger.Success("Using garble build")
+		} else {
+			ctx.Config.UseGarble = false
+			logger.Info("Using regular go build")
+		}
+	case <-time.After(ctx.Config.Timeout):
+		logger.Info("Timeout reached. Using regular go build")
+		ctx.Config.UseGarble = false
+	}
+
+	return nil
+}
+
 // stopRunningProcess stops any running application instances
 func (ctx *BuildContext) stopRunningProcess(logger *Logger) error {
 	logger.Info("Checking for running process...")
@@ -514,33 +546,14 @@ func copyDir(src, dst string) error {
 func (ctx *BuildContext) buildApplication(logger *Logger) error {
 	logger.Info("Building Go binary...")
 
-	// Generate version info if available
-	if ctx.Config.UseGoversioninfo {
-		if err := exec.Command("goversioninfo", "-platform-specific").Run(); err != nil {
-			logger.Warn("Failed to generate version info: %v", err)
-		}
-	} else {
-		logger.Info("Skipping goversioninfo (not available)")
-	}
-
-	// Build command
-	var cmd *exec.Cmd
 	outputPath := filepath.Join(ctx.DistPath, APP_NAME)
 
 	if runtime.GOOS == "windows" {
 		outputPath += ".exe"
 	}
 
-	if ctx.Config.UseGarble {
-		cmd = exec.Command("garble", "build", "-ldflags=-s -w", "-o", outputPath, MAIN_PATH)
-	} else {
-		cmd = exec.Command("go", "build", "-ldflags=-s -w", "-o", outputPath, MAIN_PATH)
-	}
-
-	// Set environment for garble
-	if ctx.Config.UseGarble {
-		cmd.Env = append(os.Environ(), "GOOS="+runtime.GOOS, "GOARCH="+runtime.GOARCH)
-	}
+	// Build command
+	cmd := exec.Command("go", "build", "-o", outputPath, "./cmd/app/")
 
 	// Run build
 	cmd.Stdout = os.Stdout
@@ -689,6 +702,7 @@ func main() {
 	}{
 		{"Checking Project Path", ctx.checkPath},
 		{"Checking required tools", ctx.checkRequiredTools},
+		{"Asking user about garble", ctx.askUserAboutGarble},
 		{"Stopping running process", ctx.stopRunningProcess},
 		{"Creating backup", ctx.createBackup},
 		{"Archiving backup", ctx.archiveBackup},

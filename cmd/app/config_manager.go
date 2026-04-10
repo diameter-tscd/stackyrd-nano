@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"stackyrd-nano-nano/config"
-	"stackyrd-nano-nano/pkg/utils"
+	"stackyrd-nano/config"
+	"stackyrd-nano/pkg/infrastructure"
+	"stackyrd-nano/pkg/utils"
 )
 
 // ConfigManager handles all configuration loading and validation
@@ -51,16 +52,11 @@ func (cm *ConfigManager) loadConfigFromURL(configURL string) (*config.Config, er
 	return cfg, nil
 }
 
-// loadConfigFromFile loads configuration from embedded FS
+// loadConfigFromFile loads configuration from local file
 func (cm *ConfigManager) loadConfigFromFile() (*config.Config, error) {
-	data, err := embeddedFiles.ReadFile("config.yaml")
+	cfg, err := config.LoadConfig()
 	if err != nil {
-		return nil, fmt.Errorf("embedded config not found: %w", err)
-	}
-
-	cfg, err := config.LoadConfigFromBytes(data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse embedded config: %w", err)
+		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
 	return cfg, nil
 }
@@ -81,26 +77,25 @@ func (cm *ConfigManager) ValidateConfig(cfg *config.Config) error {
 	return nil
 }
 
-// LoadBanner loads banner text from embedded FS
+// LoadBanner loads banner text from file if configured
 func (cm *ConfigManager) LoadBanner(cfg *config.Config) (string, error) {
-	data, err := embeddedFiles.ReadFile("banner.txt")
-	if err != nil {
-		return "", fmt.Errorf("embedded banner not found: %w", err)
+	if !infrastructure.Exists("banner") {
+		return "", nil
 	}
-	return string(data), nil
+
+	banner, err := infrastructure.Read("banner")
+	if err != nil {
+		// Return empty string if banner file doesn't exist or can't be read
+		return "", nil
+	}
+
+	return string(banner), nil
 }
 
 // GetServiceConfigs returns a unified list of all service configurations
 func (cm *ConfigManager) GetServiceConfigs(cfg *config.Config) []ServiceConfig {
 	return []ServiceConfig{
-		{Name: ServiceGrafanaName, Enabled: cfg.Grafana.Enabled},
-		{Name: ServiceMinIOName, Enabled: cfg.Monitoring.MinIO.Enabled},
-		{Name: ServiceRedisCacheName, Enabled: cfg.Redis.Enabled},
-		{Name: ServiceKafkaName, Enabled: cfg.Kafka.Enabled},
-		{Name: ServicePostgreSQLName, Enabled: cfg.Postgres.Enabled},
-		{Name: ServiceMongoDBName, Enabled: cfg.Mongo.Enabled},
 		{Name: ServiceCronName, Enabled: cfg.Cron.Enabled},
-		{Name: ServiceExternalName, Enabled: len(cfg.Monitoring.External.Services) > 0},
 	}
 }
 
@@ -119,15 +114,10 @@ func (cm *ConfigManager) CreateServiceQueue(cfg *config.Config) []ServiceInit {
 		})
 	}
 
-	initQueue = append(initQueue, ServiceInit{Name: ServiceMiddlewareName, Enabled: true, InitFunc: nil})
-
 	// Add application services
 	for name, enabled := range cfg.Services {
 		initQueue = append(initQueue, ServiceInit{Name: "Service: " + name, Enabled: enabled, InitFunc: nil})
 	}
-
-	// Add monitoring last
-	initQueue = append(initQueue, ServiceInit{Name: ServiceMonitoringName, Enabled: cfg.Monitoring.Enabled, InitFunc: nil})
 
 	return initQueue
 }

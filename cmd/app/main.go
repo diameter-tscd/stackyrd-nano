@@ -1,35 +1,48 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"net/url"
 	"os"
 
-	"stackyrd-nano-nano/pkg/utils"
+	"stackyrd-nano/pkg/infrastructure"
+	"stackyrd-nano/pkg/utils"
+
+	"github.com/spf13/viper"
 )
 
-// @title stackyrd-nano-nano API
-// @version 1.0
-// @description stackyrd-nano-nano API Documentation - A modular Go API framework
-// @termsOfService http://swagger.io/terms/
+//go:embed banner.txt config.yaml
+var embeddedFS embed.FS
 
-// @contact.name API Support
-// @contact.email admin@stackyrd-nano-nano.com
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @host localhost:8080
-// @BasePath /api/v1
-
-// @securityDefinitions.apikey ApiKeyAuth
-// @in header
-// @name Authorization
-
-// main is the entry point of the application
 func main() {
 	// Parse command line flags
 	flags := parseFlags()
+
+	// Initialize Afero embedded filesystem manager FIRST
+	aliasMap := map[string]string{
+		"config": "config.yaml",
+		"banner": "banner.txt",
+	}
+
+	// Determine environment mode
+	isDev := os.Getenv("APP_ENV") != "production"
+	infrastructure.Init(embeddedFS, aliasMap, isDev)
+
+	// Configure Viper to use Afero filesystem for config loading
+	file, err := embeddedFS.Open("config.yaml")
+	if err != nil {
+		fmt.Printf("Fatal error config FS: %v\n", err)
+		os.Exit(1)
+	}
+	defer file.Close()
+
+	// Viper configuration
+	viper.SetConfigType("yaml")
+	if err := viper.ReadConfig(file); err != nil {
+		fmt.Printf("Fatal error config read: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Create configuration manager
 	configManager := NewConfigManager(flags.ConfigURL)

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"stackyrd-nano-nano/config"
-	"stackyrd-nano-nano/internal/server"
-	"stackyrd-nano-nano/pkg/logger"
-	"stackyrd-nano-nano/pkg/tui"
-	"stackyrd-nano-nano/pkg/utils"
+	"stackyrd-nano/config"
+	"stackyrd-nano/internal/server"
+	"stackyrd-nano/pkg/logger"
+	"stackyrd-nano/pkg/tui"
+	"stackyrd-nano/pkg/utils"
 	"syscall"
 	"time"
 )
@@ -103,9 +103,15 @@ func (app *Application) checkPortStep(ctx *AppContext) error {
 
 // initLoggerStep initializes the logger
 func (app *Application) initLoggerStep(ctx *AppContext) error {
-	// Create a regular logger
+	if app.config.App.EnableTUI {
+		// For TUI mode, logger will be initialized later when we have the broadcaster
+		return nil
+	}
+
+	// For console mode, create a regular logger
 	app.logger = logger.New(app.config.App.Debug, nil)
 	app.logger.Info("Starting Application", "name", app.config.App.Name, "env", app.config.App.Env)
+	app.logger.Info("TUI mode disabled, using traditional console logging")
 	app.logger.Info("Initializing services...")
 
 	return nil
@@ -121,39 +127,66 @@ func (app *Application) startAppStep(ctx *AppContext) error {
 	return nil
 }
 
-// runWithTUI runs the application with TUI interface
+// runWithTUI runs the application with fancy TUI interface
 func (app *Application) runWithTUI() {
-	// Configure TUI configuration
+	// Configure monitoring port for TUI
+	if !app.config.Monitoring.Enabled {
+		app.config.Monitoring.Port = "disabled"
+	}
+
+	// Setup TUI configuration
 	tuiConfig := tui.StartupConfig{
 		AppName:     app.config.App.Name,
 		AppVersion:  app.config.App.Version,
 		Banner:      app.bannerText,
 		Port:        app.config.Server.Port,
-		MonitorPort: "disabled",
+		MonitorPort: app.config.Monitoring.Port,
 		Env:         app.config.App.Env,
 		IdleSeconds: app.config.App.StartupDelay,
 	}
 
-	// Run the boot sequence TUI
-	_, _ = tui.RunBootSequence(tuiConfig, []tui.ServiceInit{})
+	// Create service initialization queue
+	initQueue := app.configManager.CreateServiceQueue(app.config)
 
-	// Initialize logger
-	app.logger = logger.NewQuiet(app.config.App.Debug, nil)
+	// Convert to tui.ServiceInit
+	tuiInitQueue := make([]tui.ServiceInit, len(initQueue))
+	for i, svc := range initQueue {
+		tuiInitQueue[i] = tui.ServiceInit{
+			Name:     svc.Name,
+			Enabled:  svc.Enabled,
+			InitFunc: svc.InitFunc,
+		}
+	}
+
+	// Run the boot sequence TUI
+	_, _ = tui.RunBootSequence(tuiConfig, tuiInitQueue)
+
+	// Create and start Live TUI
+	liveTUI := app.createLiveTUI()
+	liveTUI.Start()
+
+	// Initialize logger with TUI output
+	app.logger = logger.NewQuiet(app.config.App.Debug, liveTUI)
+
+	// Add initial logs
+	liveTUI.AddLog(LogLevelInfo, "Server starting on port "+app.config.Server.Port)
+	liveTUI.AddLog(LogLevelInfo, "Environment: "+app.config.App.Env)
 
 	// Start server
 	srv := server.New(app.config, app.logger)
 	go func() {
+		liveTUI.AddLog(LogLevelInfo, "HTTP server listening...")
 		if err := srv.Start(); err != nil {
-			app.logger.Fatal("Server error", err)
+			liveTUI.AddLog(LogLevelFatal, "Server error: "+err.Error())
 		}
 	}()
 
 	// Wait for server to start
 	time.Sleep(StartupDelay)
-	app.logger.Info("Server ready", "url", "http://localhost:"+app.config.Server.Port)
+	liveTUI.AddLog(LogLevelInfo, "Server ready at http://localhost:"+app.config.Server.Port)
 
 	// Handle shutdown
-	app.handleConsoleShutdown(srv)
+	app.handleShutdown(liveTUI, srv)
 }
 
 // runWithConsole runs the application with traditional console logging
@@ -165,8 +198,16 @@ func (app *Application) runWithConsole() {
 		fmt.Print(ColorReset)
 	}
 
+	// Initialize logger
+	app.logger = logger.New(app.config.App.Debug, nil)
+
 	// Log startup information
-	app.logger.Info("Server ready to start")
+	app.logger.Info("Starting Application", "name", app.config.App.Name, "env", app.config.App.Env)
+	app.logger.Info("TUI mode disabled, using traditional console logging")
+	app.logger.Info("Initializing services...")
+
+	// Log all services
+	app.logAllServices()
 
 	// Start server
 	srv := server.New(app.config, app.logger)
@@ -185,6 +226,38 @@ func (app *Application) runWithConsole() {
 	app.handleConsoleShutdown(srv)
 }
 
+// createLiveTUI creates and configures the Live TUI
+func (app *Application) createLiveTUI() *tui.LiveTUI {
+	return tui.NewLiveTUI(tui.LiveConfig{
+		AppName:     app.config.App.Name,
+		AppVersion:  app.config.App.Version,
+		Banner:      app.bannerText,
+		Port:        app.config.Server.Port,
+		MonitorPort: app.config.Monitoring.Port,
+		Env:         app.config.App.Env,
+		OnShutdown:  utils.TriggerShutdown,
+	})
+}
+
+// handleShutdown handles graceful shutdown for TUI mode
+func (app *Application) handleShutdown(liveTUI *tui.LiveTUI, srv *server.Server) {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case <-sigChan:
+		liveTUI.AddLog(LogLevelWarn, "Shutting down...")
+		srv.Shutdown(context.Background(), app.logger)
+	case <-utils.ShutdownChan:
+		liveTUI.AddLog(LogLevelWarn, "Shutting down...")
+		srv.Shutdown(context.Background(), app.logger)
+	}
+
+	liveTUI.Stop()
+	time.Sleep(ShutdownDelay)
+	os.Exit(0)
+}
+
 // handleConsoleShutdown handles graceful shutdown for console mode
 func (app *Application) handleConsoleShutdown(srv *server.Server) {
 	sigChan := make(chan os.Signal, 1)
@@ -195,4 +268,28 @@ func (app *Application) handleConsoleShutdown(srv *server.Server) {
 	srv.Shutdown(context.Background(), app.logger)
 	time.Sleep(ShutdownDelay)
 	os.Exit(0)
+}
+
+// logAllServices logs the status of all services
+func (app *Application) logAllServices() {
+	// Log infrastructure services
+	serviceConfigs := app.configManager.GetServiceConfigs(app.config)
+	for _, svc := range serviceConfigs {
+		app.logServiceStatus(svc.Name, svc.Enabled)
+	}
+
+	// Log application services
+	for name, enabled := range app.config.Services {
+		app.logServiceStatus("Service: "+name, enabled)
+	}
+
+}
+
+// logServiceStatus logs whether a service is enabled or skipped
+func (app *Application) logServiceStatus(name string, enabled bool) {
+	if enabled {
+		app.logger.Info("Service initialized", "service", name, "status", ServiceStatusEnabled.String())
+	} else {
+		app.logger.Debug("Service skipped", "service", name, "status", ServiceStatusDisabled.String())
+	}
 }

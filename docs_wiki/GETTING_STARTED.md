@@ -1,6 +1,6 @@
-# Getting Started with stackyrd-nano-nano
+# Getting Started with stackyrd-nano
 
-This guide will get you up and running with stackyrd-nano-nano in minutes. stackyrd-nano-nano is a production-ready Go application framework with modular services, real-time monitoring, and extensive infrastructure integrations.
+This guide will get you up and running with stackyrd-nano in minutes. stackyrd-nano is a production-ready Go application framework with modular services, real-time monitoring, and extensive infrastructure integrations.
 
 ## Quick Start
 
@@ -13,8 +13,8 @@ This guide will get you up and running with stackyrd-nano-nano in minutes. stack
 
 ```bash
 # Clone the repository
-git clone https://github.com/diameter-tscd/stackyrd-nano-nano.git
-cd stackyrd-nano-nano
+git clone https://github.com/diameter-tscd/stackyrd-nano.git
+cd stackyrd-nano
 
 # Install Go dependencies
 go mod download
@@ -71,7 +71,7 @@ Add to `internal/services/modules/service_hello.go`:
 package modules
 
 import (
-    "stackyrd-nano-nano/pkg/response"
+    "stackyrd-nano/pkg/response"
     "github.com/gin-gonic/gin"
 )
 

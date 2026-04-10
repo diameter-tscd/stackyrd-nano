@@ -11,7 +11,7 @@ type LogBroadcaster struct{}
 
 // Application constants
 const (
-	AppName        = "stackyrd-nano-nano"
+	AppName        = "stackyrd-nano"
 	DefaultAppName = ""
 	DefaultVersion = "1.0.0"
 	DefaultEnv     = "development"
@@ -26,17 +26,8 @@ const (
 	WebFolderPath = "web"
 
 	// Service names for logging and initialization
-	ServiceConfigName     = "Configuration"
-	ServiceMiddlewareName = "Middleware"
-	ServiceMonitoringName = "Monitoring"
-	ServiceGrafanaName    = "Grafana"
-	ServiceMinIOName      = "MinIO"
-	ServiceRedisCacheName = "Redis Cache"
-	ServiceKafkaName      = "Kafka Messaging"
-	ServicePostgreSQLName = "PostgreSQL"
-	ServiceMongoDBName    = "MongoDB"
-	ServiceCronName       = "Cron Scheduler"
-	ServiceExternalName   = "External Services"
+	ServiceConfigName = "Configuration"
+	ServiceCronName   = "Cron Scheduler"
 
 	// Color codes for TUI output
 	ColorPurple = "\033[35m"

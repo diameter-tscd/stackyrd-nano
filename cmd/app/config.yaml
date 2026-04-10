@@ -3,6 +3,7 @@ app:
   version: "1.0.0"
   debug: true
   env: "development"
+  banner_path: "banner.txt"
   startup_delay: 3        # seconds to display boot screen (0 to skip)
   quiet_startup: true     # suppress console logs (TUI only, logs still go to monitoring)
   enable_tui: true        # enable fancy TUI mode (false = traditional console logging)
@@ -24,6 +25,90 @@ services:
 auth:
   type: "apikey"
   secret: "super-secret-key"
+
+redis:
+  enabled: false
+  address: "localhost:6379"
+  password: ""
+  db: 0
+
+kafka:
+  enabled: false
+  brokers: 
+    - "localhost:9092"
+  topic: "my-topic"
+  group_id: "my-group"
+
+postgres:
+  enabled: true
+  connections:
+    - name: "primary"
+      enabled: true
+      host: "localhost"
+      port: 5432
+      user: "postgres"
+      password: "Mypostgres01"
+      dbname: "postgres"
+      sslmode: "disable"
+
+    - name: "secondary"
+      enabled: true
+      host: "localhost"
+      port: 5433
+      user: "postgres"
+      password: "Mypostgres01"
+      dbname: "postgres"
+      sslmode: "disable"
+
+mongo:
+  enabled: true
+  connections:
+    - name: "primary"
+      enabled: true
+      uri: "mongodb://localhost:27017"
+      database: "primary_db"
+
+    - name: "secondary"
+      enabled: true
+      uri: "mongodb://localhost:27018"
+      database: "secondary_db"
+
+grafana:
+  enabled: true
+  url: "http://localhost:3000"
+  api_key: "your-grafana-api-key"
+  username: "admin"
+  password: "admin"
+
+monitoring:
+  enabled: true
+  port: "x"
+  password: "admin"
+  obfuscate_api: true
+  title: "stackyrd-nano"
+  subtitle: "Monitoring Dashboard"
+  max_photo_size_mb: 2
+  upload_dir: "web/monitoring/uploads"
+  external:
+    services:
+      - name: "Google"
+        url: "https://google.com"
+      - name: "Local API"
+        url: "http://localhost:8080/health"
+  
+minio:
+  enabled: true
+  endpoint: "localhost:9003"
+  access_key_id: "minioadmin"
+  secret_access_key: "minioadmin"
+  use_ssl: false
+  bucket_name: "main"
+
+cron:
+  enabled: true
+  jobs:
+    log_cleanup: "0 0 * * *"
+    health_check: "*/10 * * * * *" # Every 10 seconds
 
 encryption:
   enabled: false
