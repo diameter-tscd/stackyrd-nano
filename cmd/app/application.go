@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"stackyrd-nano/config"
-	"stackyrd-nano/internal/server"
-	"stackyrd-nano/pkg/logger"
-	"stackyrd-nano/pkg/utils"
+	"stackyrd-nano-nano/config"
+	"stackyrd-nano-nano/internal/server"
+	"stackyrd-nano-nano/pkg/logger"
+	"stackyrd-nano-nano/pkg/tui"
+	"stackyrd-nano-nano/pkg/utils"
 	"syscall"
 	"time"
 )
@@ -110,8 +111,53 @@ func (app *Application) initLoggerStep(ctx *AppContext) error {
 	return nil
 }
 
-// startAppStep starts the application
+// startAppStep starts the application based on TUI mode
 func (app *Application) startAppStep(ctx *AppContext) error {
+	if app.config.App.EnableTUI {
+		app.runWithTUI()
+	} else {
+		app.runWithConsole()
+	}
+	return nil
+}
+
+// runWithTUI runs the application with TUI interface
+func (app *Application) runWithTUI() {
+	// Configure TUI configuration
+	tuiConfig := tui.StartupConfig{
+		AppName:     app.config.App.Name,
+		AppVersion:  app.config.App.Version,
+		Banner:      app.bannerText,
+		Port:        app.config.Server.Port,
+		MonitorPort: "disabled",
+		Env:         app.config.App.Env,
+		IdleSeconds: app.config.App.StartupDelay,
+	}
+
+	// Run the boot sequence TUI
+	_, _ = tui.RunBootSequence(tuiConfig, []tui.ServiceInit{})
+
+	// Initialize logger
+	app.logger = logger.NewQuiet(app.config.App.Debug, nil)
+
+	// Start server
+	srv := server.New(app.config, app.logger)
+	go func() {
+		if err := srv.Start(); err != nil {
+			app.logger.Fatal("Server error", err)
+		}
+	}()
+
+	// Wait for server to start
+	time.Sleep(StartupDelay)
+	app.logger.Info("Server ready", "url", "http://localhost:"+app.config.Server.Port)
+
+	// Handle shutdown
+	app.handleConsoleShutdown(srv)
+}
+
+// runWithConsole runs the application with traditional console logging
+func (app *Application) runWithConsole() {
 	// Print banner to console
 	if app.bannerText != "" {
 		fmt.Print(ColorPurple)
@@ -137,7 +183,6 @@ func (app *Application) startAppStep(ctx *AppContext) error {
 
 	// Handle shutdown
 	app.handleConsoleShutdown(srv)
-	return nil
 }
 
 // handleConsoleShutdown handles graceful shutdown for console mode

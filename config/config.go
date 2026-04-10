@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"strings"
 	"time"
 
@@ -201,6 +202,23 @@ type GrafanaConfig struct {
 // LoadConfig loads configuration from local file or URL
 func LoadConfig() (*Config, error) {
 	return LoadConfigWithURL("")
+}
+
+// LoadConfigFromBytes loads configuration from raw byte data
+func LoadConfigFromBytes(data []byte) (*Config, error) {
+	setupViperDefaults()
+
+	viper.SetConfigType("yaml")
+	if err := viper.ReadConfig(bytes.NewReader(data)); err != nil {
+		return nil, err
+	}
+
+	var cfg Config
+	if err := viper.Unmarshal(&cfg); err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
 }
 
 // LoadConfigWithURL loads configuration from URL (if provided) or local file

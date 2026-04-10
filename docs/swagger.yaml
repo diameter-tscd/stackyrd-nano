@@ -285,14 +285,14 @@ definitions:
 host: localhost:8080
 info:
   contact:
-    email: admin@stackyrd-nano.com
+    email: admin@stackyrd-nano-nano.com
     name: API Support
-  description: stackyrd-nano API Documentation - A modular Go API framework
+  description: stackyrd-nano-nano API Documentation - A modular Go API framework
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
-  title: stackyrd-nano API
+  title: stackyrd-nano-nano API
   version: "1.0"
 paths:
   /cache/{key}:

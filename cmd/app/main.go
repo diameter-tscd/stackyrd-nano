@@ -5,16 +5,16 @@ import (
 	"net/url"
 	"os"
 
-	"stackyrd-nano/pkg/utils"
+	"stackyrd-nano-nano/pkg/utils"
 )
 
-// @title stackyrd-nano API
+// @title stackyrd-nano-nano API
 // @version 1.0
-// @description stackyrd-nano API Documentation - A modular Go API framework
+// @description stackyrd-nano-nano API Documentation - A modular Go API framework
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name API Support
-// @contact.email admin@stackyrd-nano.com
+// @contact.email admin@stackyrd-nano-nano.com
 
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html

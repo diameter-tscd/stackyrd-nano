@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"stackyrd-nano/pkg/logger"
+	"stackyrd-nano-nano/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 )

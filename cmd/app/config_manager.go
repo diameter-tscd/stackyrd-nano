@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"path/filepath"
-	"stackyrd-nano/config"
-	"stackyrd-nano/pkg/utils"
+	"stackyrd-nano-nano/config"
+	"stackyrd-nano-nano/pkg/utils"
 )
 
 // ConfigManager handles all configuration loading and validation
@@ -52,11 +51,16 @@ func (cm *ConfigManager) loadConfigFromURL(configURL string) (*config.Config, er
 	return cfg, nil
 }
 
-// loadConfigFromFile loads configuration from local file
+// loadConfigFromFile loads configuration from embedded FS
 func (cm *ConfigManager) loadConfigFromFile() (*config.Config, error) {
-	cfg, err := config.LoadConfig()
+	data, err := embeddedFiles.ReadFile("config.yaml")
 	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
+		return nil, fmt.Errorf("embedded config not found: %w", err)
+	}
+
+	cfg, err := config.LoadConfigFromBytes(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse embedded config: %w", err)
 	}
 	return cfg, nil
 }
@@ -77,24 +81,13 @@ func (cm *ConfigManager) ValidateConfig(cfg *config.Config) error {
 	return nil
 }
 
-// LoadBanner loads banner text from file if configured
+// LoadBanner loads banner text from embedded FS
 func (cm *ConfigManager) LoadBanner(cfg *config.Config) (string, error) {
-	if cfg.App.BannerPath == "" {
-		return "", nil
-	}
-
-	bannerPath := cfg.App.BannerPath
-	if !filepath.IsAbs(bannerPath) {
-		bannerPath = filepath.Join(".", bannerPath)
-	}
-
-	banner, err := os.ReadFile(bannerPath)
+	data, err := embeddedFiles.ReadFile("banner.txt")
 	if err != nil {
-		// Return empty string if banner file doesn't exist or can't be read
-		return "", nil
+		return "", fmt.Errorf("embedded banner not found: %w", err)
 	}
-
-	return string(banner), nil
+	return string(data), nil
 }
 
 // GetServiceConfigs returns a unified list of all service configurations

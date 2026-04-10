@@ -15,9 +15,9 @@
   },
   "StringFileInfo": {
     "CompanyName": "John Doe Company",
-    "FileDescription": "stackyrd-nano Project",
-    "ProductName": "stackyrd-nano",
-    "InternalName": "stackyrd-nano",
-    "OriginalFilename": "stackyrd-nano.exe"
+    "FileDescription": "stackyrd-nano-nano Project",
+    "ProductName": "stackyrd-nano-nano",
+    "InternalName": "stackyrd-nano-nano",
+    "OriginalFilename": "stackyrd-nano-nano.exe"
   }
 }

@@ -1,16 +1,16 @@
 # Architecture Overview
 
-This document provides a high-level overview of stackyrd-nano's architecture, design decisions, and key concepts. Understanding this foundation will help you build effectively with the framework.
+This document provides a high-level overview of stackyrd-nano-nano's architecture, design decisions, and key concepts. Understanding this foundation will help you build effectively with the framework.
 
 ## System Overview
 
-stackyrd-nano is a modular, service-oriented Go application framework built on top of the Gin web framework. It emphasizes clean architecture, dependency injection, and production readiness with comprehensive monitoring and infrastructure integrations.
+stackyrd-nano-nano is a modular, service-oriented Go application framework built on top of the Gin web framework. It emphasizes clean architecture, dependency injection, and production readiness with comprehensive monitoring and infrastructure integrations.
 
 ## Core Architecture Principles
 
 ### 1. Clean Architecture
 
-stackyrd-nano follows clean architecture principles with clear separation of concerns:
+stackyrd-nano-nano follows clean architecture principles with clear separation of concerns:
 
 ```
 ┌─────────────────────────────────────┐
@@ -70,7 +70,7 @@ type PostgresManager struct {
 ### Application Structure
 
 ```
-stackyrd-nano/
+stackyrd-nano-nano/
 ├── cmd/app/           # Application entry point
 ├── config/            # Configuration management
 ├── internal/          # Private application code
@@ -150,7 +150,7 @@ func init() {
 
 ### Database Managers
 
-stackyrd-nano supports multiple database types through abstracted managers with **multi-tenant architecture**:
+stackyrd-nano-nano supports multiple database types through abstracted managers with **multi-tenant architecture**:
 
 #### PostgreSQL Manager
 - **Multi-tenant support**: Dynamic database switching per tenant
@@ -255,7 +255,7 @@ Configuration is managed through a **hierarchical YAML structure** with **multi-
 
 ```yaml
 app:          # Application-level settings
-  name: "stackyrd-nano"
+  name: "stackyrd-nano-nano"
   debug: true
   env: "development"
 
@@ -689,8 +689,8 @@ go run cmd/app/main.go
 
 ## Conclusion
 
-stackyrd-nano's architecture emphasizes **modularity**, **scalability**, and **maintainability** through clean architecture principles, service-oriented design, and comprehensive infrastructure abstractions. The framework provides a solid foundation for building production-ready applications while maintaining developer productivity and code quality.
+stackyrd-nano-nano's architecture emphasizes **modularity**, **scalability**, and **maintainability** through clean architecture principles, service-oriented design, and comprehensive infrastructure abstractions. The framework provides a solid foundation for building production-ready applications while maintaining developer productivity and code quality.
 
-The combination of **async processing**, **dependency injection**, and **configuration-driven behavior** makes stackyrd-nano suitable for applications ranging from simple APIs to complex, multi-tenant SaaS platforms.
+The combination of **async processing**, **dependency injection**, and **configuration-driven behavior** makes stackyrd-nano-nano suitable for applications ranging from simple APIs to complex, multi-tenant SaaS platforms.
 
 For detailed implementation guides, see the **[Development Guide](DEVELOPMENT.md)**. For complete API reference, see the **[API Reference](REFERENCE.md)**.

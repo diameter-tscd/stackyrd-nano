@@ -1,10 +1,10 @@
 # API Documentation Guide
 
-This guide covers how to automatically generate and maintain Swagger/OpenAPI documentation for stackyrd-nano services using swaggo/swag. No manual YAML editing required—documentation is generated directly from your Go code annotations.
+This guide covers how to automatically generate and maintain Swagger/OpenAPI documentation for stackyrd-nano-nano services using swaggo/swag. No manual YAML editing required—documentation is generated directly from your Go code annotations.
 
 ## Overview
 
-stackyrd-nano uses **swaggo/swag** to automatically generate Swagger documentation from code annotations. This approach ensures your API documentation stays synchronized with your actual code implementation.
+stackyrd-nano-nano uses **swaggo/swag** to automatically generate Swagger documentation from code annotations. This approach ensures your API documentation stays synchronized with your actual code implementation.
 
 ### Benefits
 
@@ -43,7 +43,7 @@ go get github.com/swaggo/echo-swagger
 which swag
 
 # Test in your project
-cd /path/to/stackyrd-nano
+cd /path/to/stackyrd-nano-nano
 swag init --help
 ```
 
@@ -56,13 +56,13 @@ Create API-level metadata that appears at the top of your Swagger documentation.
 ```go
 package main
 
-// @title stackyrd-nano API
+// @title stackyrd-nano-nano API
 // @version 1.0
-// @description stackyrd-nano API Documentation - A modular Go API framework
+// @description stackyrd-nano-nano API Documentation - A modular Go API framework
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name API Support
-// @contact.email admin@stackyrd-nano.com
+// @contact.email admin@stackyrd-nano-nano.com
 
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
@@ -83,13 +83,13 @@ func main() {
 
 | Annotation | Description | Example |
 |------------|-------------|---------|
-| `@title` | API title | `@title stackyrd-nano API` |
+| `@title` | API title | `@title stackyrd-nano-nano API` |
 | `@version` | API version | `@version 1.0` |
-| `@description` | API description | `@description stackyrd-nano API Documentation` |
+| `@description` | API description | `@description stackyrd-nano-nano API Documentation` |
 | `@host` | Server host | `@host localhost:8080` |
 | `@BasePath` | Base path for all endpoints | `@BasePath /api/v1` |
 | `@contact.name` | Contact name | `@contact.name API Support` |
-| `@contact.email` | Contact email | `@contact.email admin@stackyrd-nano.com` |
+| `@contact.email` | Contact email | `@contact.email admin@stackyrd-nano-nano.com` |
 | `@license.name` | License name | `@license.name Apache 2.0` |
 | `@license.url` | License URL | `@license.url http://www.apache.org/licenses/LICENSE-2.0.html` |
 
@@ -314,12 +314,12 @@ type Meta struct {
 package modules
 
 import (
-    "stackyrd-nano/config"
-    "stackyrd-nano/pkg/interfaces"
-    "stackyrd-nano/pkg/logger"
-    "stackyrd-nano/pkg/registry"
-    "stackyrd-nano/pkg/request"
-    "stackyrd-nano/pkg/response"
+    "stackyrd-nano-nano/config"
+    "stackyrd-nano-nano/pkg/interfaces"
+    "stackyrd-nano-nano/pkg/logger"
+    "stackyrd-nano-nano/pkg/registry"
+    "stackyrd-nano-nano/pkg/request"
+    "stackyrd-nano-nano/pkg/response"
     "time"
 
     "github.com/labstack/echo/v4"
@@ -526,11 +526,11 @@ func init() {
 package modules
 
 import (
-    "stackyrd-nano/config"
-    "stackyrd-nano/pkg/interfaces"
-    "stackyrd-nano/pkg/logger"
-    "stackyrd-nano/pkg/registry"
-    "stackyrd-nano/pkg/response"
+    "stackyrd-nano-nano/config"
+    "stackyrd-nano-nano/pkg/interfaces"
+    "stackyrd-nano-nano/pkg/logger"
+    "stackyrd-nano-nano/pkg/registry"
+    "stackyrd-nano-nano/pkg/response"
 
     "github.com/labstack/echo/v4"
 )
@@ -708,9 +708,9 @@ Document different response scenarios:
 
 ## Generating Documentation
 
-### stackyrd-nano Swagger Generator (Recommended)
+### stackyrd-nano-nano Swagger Generator (Recommended)
 
-stackyrd-nano includes a custom swagger generator script that follows the same pattern as the build system. This script provides detailed analysis of exposed endpoints before generation.
+stackyrd-nano-nano includes a custom swagger generator script that follows the same pattern as the build system. This script provides detailed analysis of exposed endpoints before generation.
 
 **One-Line Command:**
 
@@ -739,7 +739,7 @@ go run scripts/swagger/swagger.go --verbose
 
 ```
    /\ 
-   (  )   Swagger Generator for stackyrd-nano
+   (  )   Swagger Generator for stackyrd-nano-nano
     \/
 ----------------------------------------------------------------------
 [1/6] Finding project root
@@ -898,7 +898,7 @@ import (
     echoSwagger "github.com/swaggo/echo-swagger"
     
     // Import generated docs
-    _ "stackyrd-nano/docs"
+    _ "stackyrd-nano-nano/docs"
 )
 
 func (s *Server) setupSwagger() {
@@ -1075,7 +1075,7 @@ Complete workflow for adding a new documented endpoint:
 # Edit internal/services/modules/users_service.go
 
 # 2. Generate documentation
-cd /path/to/stackyrd-nano
+cd /path/to/stackyrd-nano-nano
 swag init -g cmd/app/main.go -o docs
 
 # 3. Verify generated files

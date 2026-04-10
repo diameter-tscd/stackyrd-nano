@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	"stackyrd-nano/config"
-	"stackyrd-nano/internal/middleware"
-	"stackyrd-nano/pkg/logger"
-	"stackyrd-nano/pkg/response"
+	"stackyrd-nano-nano/config"
+	"stackyrd-nano-nano/internal/middleware"
+	"stackyrd-nano-nano/pkg/logger"
+	"stackyrd-nano-nano/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )

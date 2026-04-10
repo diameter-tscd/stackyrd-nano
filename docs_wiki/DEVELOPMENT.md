@@ -1,10 +1,10 @@
 # Development Guide
 
-This guide covers how to extend and customize stackyrd-nano for your specific needs. Learn to add new services, integrate databases, handle API requests, and deploy your application.
+This guide covers how to extend and customize stackyrd-nano-nano for your specific needs. Learn to add new services, integrate databases, handle API requests, and deploy your application.
 
 ## Adding New Services
 
-Services are the core building blocks of stackyrd-nano applications. Each service encapsulates business logic and exposes API endpoints.
+Services are the core building blocks of stackyrd-nano-nano applications. Each service encapsulates business logic and exposes API endpoints.
 
 ### Basic Service Structure
 
@@ -14,12 +14,12 @@ Create a new service in `internal/services/modules/service_yourname.go`:
 package modules
 
 import (
-	"stackyrd-nano/config"
-	"stackyrd-nano/pkg/interfaces"
-	"stackyrd-nano/pkg/logger"
-	"stackyrd-nano/pkg/registry"
-	"stackyrd-nano/pkg/request"
-	"stackyrd-nano/pkg/response"
+	"stackyrd-nano-nano/config"
+	"stackyrd-nano-nano/pkg/interfaces"
+	"stackyrd-nano-nano/pkg/logger"
+	"stackyrd-nano-nano/pkg/registry"
+	"stackyrd-nano-nano/pkg/request"
+	"stackyrd-nano-nano/pkg/response"
 
 	"github.com/labstack/echo/v4"
 )
@@ -111,7 +111,7 @@ curl http://localhost:8080/api/v1/your-api
 
 ### Request Handling & Validation
 
-stackyrd-nano provides built-in request validation and standardized responses.
+stackyrd-nano-nano provides built-in request validation and standardized responses.
 
 #### Basic Request Handling
 
@@ -826,7 +826,7 @@ go run cmd/app/main.go
 
 ### How Auto-Discovery Works
 
-stackyrd-nano uses an automatic service discovery system that eliminates the need for manual service registration:
+stackyrd-nano-nano uses an automatic service discovery system that eliminates the need for manual service registration:
 
 1. **Package Import**: When a service package is imported, Go calls its `init()` function
 2. **Factory Registration**: The `init()` function registers a service factory with the global registry
@@ -977,7 +977,7 @@ Services are registered in the order they are discovered, which depends on:
 
 ## Next Steps
 
-Now that you understand how to develop with stackyrd-nano, explore:
+Now that you understand how to develop with stackyrd-nano-nano, explore:
 
 - **[Architecture Overview](ARCHITECTURE.md)** - Deep dive into the technical design
 - **[API Reference](REFERENCE.md)** - Complete technical documentation
