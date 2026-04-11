@@ -51,4 +51,6 @@ go run scripts/build/build.go
 ## License
 Apache License Version 2.0: [LICENSE](LICENSE)
 
-**Powered by diameter-tscd.**
+<div align="center">
+  <img src=".assets/diameter-banner.png" alt="diameter-tscd" style="width: 100%; max-width: 700px;"/>
+</div>
