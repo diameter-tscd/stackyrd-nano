@@ -1,0 +1,25 @@
+app:
+  name: "stackyrd-nano"
+  version: "1.0.0"
+  debug: true
+  env: "development"
+  startup_delay: 2        # seconds to display boot screen (0 to skip)
+  quiet_startup: true     # suppress console logs (TUI only, logs still go to monitoring)
+  enable_tui: true        # enable fancy TUI mode (false = traditional console logging)
+
+server:   
+  port: "8080"
+
+services:
+  users_defined: false
+
+auth:
+  type: "apikey"
+  secret: "super-secret-key"
+
+encryption:
+  enabled: false
+  algorithm: "aes-256-gcm"
+  key: ""
+  rotate_keys: false
+  key_rotation_interval: "24h"

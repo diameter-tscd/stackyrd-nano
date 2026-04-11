@@ -1,0 +1,196 @@
+name: Go Security Scan
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM
+  workflow_dispatch:
+  push:
+    branches: [ main, master, development ]
+  pull_request:
+    branches: [ main, master, development ]
+
+jobs:
+  golang-security:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # Changed from read to write for commit access
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25.5'  # Fixed version (1.25.3 doesn't exist yet)
+
+      - name: Run Gosec
+        uses: securego/gosec@master
+        with:
+          args: '-fmt sarif -out gosec-results.sarif ./...'
+        continue-on-error: true
+
+      - name: Upload Gosec SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: gosec-results.sarif
+
+      - name: Install Nancy
+        run: |
+          go install github.com/sonatype-nexus-community/nancy@latest
+
+      - name: Run Nancy
+        run: |
+          go list -json -deps ./... | nancy sleuth --output=json > nancy-report.json || true
+        continue-on-error: true
+
+      - name: Install Govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Run Govulncheck
+        run: |
+          govulncheck ./... > govulncheck-report.txt || true
+          cat govulncheck-report.txt
+        continue-on-error: true
+
+      - name: Run Trivy
+        id: trivy-scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+        continue-on-error: true
+
+      - name: Check Trivy SARIF
+        id: check-trivy
+        run: |
+          if [ -f trivy-results.sarif ]; then
+            echo "sarif_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "sarif_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload Trivy SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: steps.check-trivy.outputs.sarif_exists == 'true'
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Install StaticCheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+      - name: Run StaticCheck
+        run: staticcheck ./... || true
+        continue-on-error: true
+
+      - name: Install Go-Critic
+        run: go install github.com/go-critic/go-critic/cmd/gocritic@latest
+
+      - name: Run Go-Critic
+        run: gocritic check ./... || true
+        continue-on-error: true
+
+      - name: Prepare Reports
+        if: always()
+        run: |
+          mkdir -p .security-reports
+
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          EPOCH=$(date +%s)
+
+          STATUS="success"
+          if grep -q "CRITICAL\|HIGH" govulncheck-report.txt 2>/dev/null || \
+             grep -q "CRITICAL\|HIGH" *.json 2>/dev/null; then
+            STATUS="alert"
+          fi
+
+          REPORT_FILE=".security-reports/scan_${STATUS}_${TIMESTAMP}_${EPOCH}.md"
+
+          echo "# Security Scan Report" > $REPORT_FILE
+          echo "**Date:** $(date '+%Y-%m-%d %H:%M:%S')" >> $REPORT_FILE
+          echo "**Status:** ${STATUS}" >> $REPORT_FILE
+          echo "**Epoch:** ${EPOCH}" >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+
+          echo "## Govulncheck Results" >> $REPORT_FILE
+          echo "\`\`\`" >> $REPORT_FILE
+          cat govulncheck-report.txt 2>/dev/null || echo "No results" >> $REPORT_FILE
+          echo "\`\`\`" >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+
+          echo "## Nancy Results" >> $REPORT_FILE
+          echo "\`\`\`json" >> $REPORT_FILE
+          cat nancy-report.json 2>/dev/null || echo "{}" >> $REPORT_FILE
+          echo "\`\`\`" >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+
+          echo "## Gosec Results" >> $REPORT_FILE
+          echo "See SARIF file: gosec-results.sarif" >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+
+          cp gosec-results.sarif .security-reports/gosec_${TIMESTAMP}.sarif 2>/dev/null || true
+          cp trivy-results.sarif .security-reports/trivy_${TIMESTAMP}.sarif 2>/dev/null || true
+
+          echo "Report created: $REPORT_FILE"
+
+      - name: Cleanup Old Reports
+        if: always()
+        run: |
+          cd .security-reports || exit 0
+          CURRENT_EPOCH=$(date +%s)
+          THREE_DAYS=259200
+
+          for file in scan_*_*.md; do
+            if [ -f "$file" ]; then
+              FILE_EPOCH=$(echo $file | grep -oP '\d{10}(?=\.md)')
+              if [ ! -z "$FILE_EPOCH" ]; then
+                AGE=$((CURRENT_EPOCH - FILE_EPOCH))
+                if [ $AGE -gt $THREE_DAYS ]; then
+                  echo "Deleting old report: $file (age: $((AGE/86400)) days)"
+                  rm -f "$file"
+                  DATETIME=$(echo $file | grep -oP '\d{8}_\d{6}')
+                  rm -f "gosec_${DATETIME}.sarif" 2>/dev/null || true
+                  rm -f "trivy_${DATETIME}.sarif" 2>/dev/null || true
+                fi
+              fi
+            fi
+          done
+          cd ..
+
+      - name: Commit Reports
+        if: always()
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          git add .security-reports/
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: security scan report $(date '+%Y-%m-%d %H:%M:%S')"
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+            git push origin HEAD:${{ github.ref_name }}
+          fi
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
