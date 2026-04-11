@@ -1,0 +1,69 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+# # .vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+monitoring_users.db
+
+# Uploaded files
+web/monitoring/uploads/
+
+# Config backups
+*.yaml.backup
+*.yml.backup
+config.yaml.bak
+
+# Build artifacts
+/bin/
+/dist/
+dist/
+/build/
+
+# Debug files
+__debug_bin*
+*.pprof
+
+# Temporary files
+/tmp/
+*.tmp
+
+# OS specific
+Thumbs.db
+.DS_Store
+
+# Workspace
+.workspace/
+
+# Files
+stackyrd

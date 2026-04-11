@@ -344,202 +344,57 @@ services:
   inventory: true
 ```
 
-## 7. TERMINAL USER INTERFACE (TUI)
+## 7. APPLICATION LOGGING
 
-### 7.1 Overview
+### 7.1 Console Logging
 
-The TUI provides visual feedback during boot and system status information using Bubble Tea framework.
+The application uses standard console logging with structured output. All startup sequence, service initialization, and runtime events are logged to stdout.
 
-**Technologies:**
-- Bubble Tea: TUI framework
-- Lipgloss: Styling and layout
-- Bubbles: Pre-built components
+**Key Features:**
+- Structured logging format
+- Color-coded output for different log levels
+- Timestamp with millisecond precision
+- Component identification in log entries
+- Graceful error reporting with full stack traces
 
-### 7.2 Boot Sequence (`pkg/tui/boot.go`)
+### 7.2 Boot Sequence
 
-**Features:**
-- Phased execution (Starting → Initializing → Complete/Countdown)
-- Visual feedback with spinners and progress bars
-- Service queue with color-coded status
-- Interactive controls (skip countdown, quit)
+Application startup follows a clean step-by-step execution pattern with clear progress logging:
 
-**Phases:**
-1. **Starting**: Intro animation
-2. **Initializing**: Service initialization with real-time feedback
-3. **Complete/Countdown**: Success message with optional countdown
+1. **Configuration Loading**
+2. **Banner Display**
+3. **Port Validation**
+4. **Logger Initialization**
+5. **Infrastructure Setup**
+6. **Service Registration**
+7. **Server Startup**
 
-### 7.3 Live Logs (`pkg/tui/live.go`)
+Each step logs completion status with clear success or error indicators.
 
-**Features:**
-- Real-time log display with full scrolling support
-- Interactive log filtering with modal dialog
-- Auto-scroll control with manual toggle
-- Log management with clear functionality
-- Thread-safe log operations
-- Sticky header and footer with navigation controls
+### 7.3 Service Status Logging
 
-**Layout:**
-- **Sticky Header**: App name, version, status, and logs section header
-- **Scrollable Content**: Log entries with smooth scrolling
-- **Sticky Footer**: Filter status, scroll position, auto-scroll status, and controls
-- **Modal Dialog**: Centered filter input on black background when active
+All services report their initialization status during startup:
+- Service name and enabled state
+- Dependency resolution status
+- Initialization completion time
+- Endpoint registration confirmation
 
-**Controls:**
-- **Arrow Keys**: Scroll up/down through logs
-- **Page Up/Down**: Page through logs
-- **Home/End**: Jump to top/bottom
-- **/**: Open filter dialog
-- **F1**: Toggle auto-scroll on/off
-- **F2**: Clear all logs
-- **q/Esc**: Exit application
+### 7.4 Runtime Logging
 
-### 7.4 Service Architecture Showcase
+Runtime logging includes:
+- HTTP request/response logging
+- Database operation metrics
+- Infrastructure health status
+- Error and warning events
+- Performance metrics
 
-The application demonstrates different service implementation patterns through specialized services:
+### 7.5 Log Levels
 
-#### MongoDB Service (`internal/services/modules/mongodb_service.go`) - MongoDB Multi-Tenant Service
-**Database-focused service** providing comprehensive MongoDB operations:
-- **Multi-tenant support**: Operations across isolated tenant databases
-- **Full CRUD operations**: Create, read, update, delete for products
-- **Advanced search**: Complex queries with filtering and pagination
-- **Analytics**: Aggregation pipelines for tenant-specific insights
-- **API Endpoints**: `/api/v1/products/{tenant}/*` - Tenant-scoped operations
-
-#### Broadcast Service (`internal/services/modules/broadcast_service.go`) - Clean Event Streaming Demo
-**Simple, user-friendly implementation** using the broadcast utility:
-- **Clean and simple**: Only 150 lines of code using `pkg/utils/broadcast.go`
-- **Easy to understand**: Demonstrates how easy event streaming can be
-- **Broadcasting made easy**: Shows the power of reusable utilities
-- **Educational value**: Perfect example of clean architecture
-
-#### Grafana Service (`internal/services/modules/grafana_service.go`) - Grafana Integration Service
-**Monitoring and visualization service** providing comprehensive Grafana API integration:
-- **Dashboard Management**: Create, update, retrieve, and delete Grafana dashboards
-- **Data Source Configuration**: Set up Prometheus, InfluxDB, and other data sources
-- **Annotation Support**: Add timeline annotations for events and deployments
-- **Health Monitoring**: Real-time Grafana instance status and connectivity
-- **API Endpoints**: `/api/v1/grafana/*` - Complete Grafana API integration
-
-#### Broadcast Utility (`pkg/utils/broadcast.go`) - Reusable Infrastructure
-**Extracted broadcasting component** for maximum reusability:
-
-```go
-// Simple integration for any service
-broadcaster := utils.NewEventBroadcaster()
-client := broadcaster.Subscribe("my-stream")
-broadcaster.Broadcast("my-stream", "event", "message", data)
-```
-
-**Utility Benefits:**
-- **Clean code**: Services focus on business logic, not infrastructure
-- **Easy integration**: Just import and use
-- **Consistent API**: All services using broadcast have same interface
-- **Thread-safe operations** with proper synchronization
-
-#### Service Implementation Patterns
-
-**Simple Utility Pattern (Broadcast Service)**
-```go
-// Clean and simple implementation
-type BroadcastService struct {
-    broadcaster *utils.EventBroadcaster  // Just use the utility!
-    streams     map[string]*SimpleStreamGenerator
-}
-
-// Pros: Clean, maintainable, easy to understand
-// Cons: Minimal - just use the utility
-```
-
-**Infrastructure Integration Pattern (Grafana Service)**
-```go
-// Infrastructure-focused service
-type GrafanaService struct {
-    grafanaManager *infrastructure.GrafanaManager  // External service integration
-    enabled        bool
-    logger         *logger.Logger
-}
-
-// Pros: Full API integration, async operations, comprehensive error handling
-// Cons: More complex implementation, external dependencies
-```
-
-#### API Endpoints
-
-| Service | Purpose | API Prefix | Implementation |
-|---------|---------|------------|----------------|
-| **MongoDB Service** | MongoDB multi-tenant | `/products/{tenant}/` | Database operations |
-| **Broadcast Service** | Event streaming | `/events/` | Clean utility usage |
-| **Grafana Service** | Grafana integration | `/grafana/` | External API integration |
-
-#### MongoDB Multi-Tenant Operations (MongoDB Service)
-- `GET /api/v1/products/{tenant}` - List tenant products
-- `POST /api/v1/products/{tenant}` - Create product in tenant
-- `GET /api/v1/products/{tenant}/{id}` - Get specific product
-- `PUT /api/v1/products/{tenant}/{id}` - Update product
-- `DELETE /api/v1/products/{tenant}/{id}` - Delete product
-- `GET /api/v1/products/{tenant}/search` - Advanced search
-- `GET /api/v1/products/{tenant}/analytics` - Analytics dashboard
-
-#### Event Streaming Operations (Broadcast Service)
-- `GET /api/v1/events/stream/{stream_id}` - SSE subscription
-- `POST /api/v1/events/broadcast` - Event broadcasting
-- `GET /api/v1/events/streams` - Stream information
-- `POST /api/v1/events/stream/{id}/start|stop` - Simple stream management
-
-### 7.4 Reusable Dialog System (`pkg/tui/template/dialog.go`)
-
-**Features:**
-- **Template-based Dialogs**: Reusable dialog components moved to `pkg/tui/template/`
-- **Dialog Types**: Confirmation dialogs and input dialogs
-- **Easy Integration**: Simple API for Bubble Tea models
-- **Customizable**: Configurable width, titles, content, and styling
-- **Helper Functions**: Pre-built common dialogs (exit confirmation, filter input)
-- **State Management**: Proper active/inactive state handling
-
-### 7.5 Enhanced Live Logs (`pkg/tui/live.go`)
-
-**Advanced Features:**
-- **Unlimited Log Storage**: Removed 1000 log limit for unlimited storage
-- **Default Auto-scroll**: Auto-scroll enabled by default on startup
-- **Clean Footer**: Removed scroll count for cleaner interface
-- **Reusable Dialogs**: Uses template-based dialog system
-- **Thread-safe Operations**: All log operations properly synchronized
-- **Real-time Filtering**: Press "/" for modal log filtering
-- **Scroll Management**: Full keyboard navigation (arrows, page up/down, home/end)
-
-### 7.6 Styling System (`pkg/tui/styles.go`)
-
-**Unified Color Palette (Live.go inspired):**
-- **Primary Cyan**: `#8daea5` - Used for main headers, titles, and primary elements
-- **Light Gray**: `#626262ff` - Used for secondary elements and disabled states
-- **Light Yellow**: `#f5fac0ff` - Used for warning/starting states
-- **Light Green**: `#9af8b1ff` - Used for success states
-- **Light Red**: `#f67373ff` - Used for error states
-- **Off-white text**: `#F8F8F2` - Used for service names and content
-
-**Color Consistency:**
-- **Simple Renderer**: Updated to match Live.go color scheme for visual consistency
-- **Live TUI**: Maintains original color palette with enhanced accessibility
-- **Boot Sequence**: Uses unified colors for cohesive appearance
-- **Service Status**: Consistent color coding across all TUI components
-
-**Recent Color Unification (v2.0):**
-- **Purpose**: Unified color schemes between `pkg/tui/simple.go` and `pkg/tui/live.go`
-- **Benefits**: Visual consistency across all TUI implementations
-- **Changes Applied**:
-  - Banner: `#BD93F9` → `#8daea5` (purple to cyan)
-  - Divider: `#44475A` → `#626262ff` (dark gray to gray)
-  - Section headers: `#8BE9FD` → `#8daea5` (light blue to cyan)
-  - Service starting: `#F1FA8C` → `#f5fac0ff` (yellow to light yellow)
-  - Service success: `#50FA7B` → `#9af8b1ff` (green to light green)
-  - Service error: `#FF5555` → `#f67373ff` (red to light red)
-  - Server ready elements: Unified to `#8daea5` (cyan)
-  - Box styling: `#6272A4` → `#8daea5` (blue to cyan)
-  - Animation colors: Updated for consistency
-
-**Animations:**
-- Wave animation (boot screen)
-- Pulse effects (color cycling)
+- **DEBUG**: Detailed debugging information
+- **INFO**: Normal operational events
+- **WARN**: Non-critical warning conditions
+- **ERROR**: Error conditions requiring attention
+- **FATAL**: Fatal errors causing application termination
 
 ## 8. ASYNC INFRASTRUCTURE SYSTEM
 
@@ -2170,184 +2025,29 @@ The swagger.yaml includes definitions for:
 
 ## 17. SECURITY ENHANCEMENTS
 
-### 17.1 Rate Limiting Middleware
+### 17.1 Security Middleware
 
-**Location:** `internal/middleware/ratelimit.go`
+**Location:** `internal/middleware/middleware.go`
 
-Provides configurable request rate limiting per IP or user.
-
-**Features:**
-- Token bucket algorithm implementation
-- Configurable request limits and time windows
-- Per-IP or per-user rate limiting
-- Automatic cleanup of expired entries
-- Rate limit headers in responses (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`)
-
-**Configuration:**
-```go
-// Default: 60 requests per minute per IP
-middleware.RateLimit()
-
-// Custom configuration
-middleware.RateLimitWithConfig(100, time.Minute)
-
-// Per-user rate limiting
-middleware.RateLimitPerUser(100, time.Minute)
-```
-
-**Response on Limit Exceeded:**
-```json
-{
-  "success": false,
-  "status": 429,
-  "error": {
-    "code": "RATE_LIMIT_EXCEEDED",
-    "message": "Rate limit exceeded. Please try again later.",
-    "details": {
-      "retry_after": 1672531260
-    }
-  }
-}
-```
-
-### 17.2 CORS Middleware
-
-**Location:** `internal/middleware/cors.go`
-
-Cross-Origin Resource Sharing support with wildcard subdomain matching.
+Provides core security features for HTTP endpoints.
 
 **Features:**
-- Configurable allowed origins, methods, and headers
-- Wildcard subdomain support (e.g., `*.example.com`)
-- Preflight request handling
-- Credentials support
-- Max-Age caching
+- Request ID injection
+- Request logging
+- Panic recovery
+- Content type validation
+- Request size limits
 
 **Configuration:**
 ```go
-// Allow all origins
-middleware.CORSAllowAll()
-
-// Specific origins
-middleware.CORSWithConfig([]string{"https://example.com", "https://app.example.com"})
-
-// Full configuration
-middleware.CORS(middleware.CORSConfig{
-    AllowOrigins:     []string{"https://example.com"},
-    AllowMethods:     []string{http.MethodGet, http.MethodPost},
-    AllowHeaders:     []string{echo.HeaderContentType, echo.HeaderAuthorization},
-    AllowCredentials: true,
-    MaxAge:           86400,
-})
+e.Use(middleware.Recover())
+e.Use(middleware.Logger())
+e.Use(middleware.RequestID())
 ```
 
-### 17.3 JWT Authentication Middleware
+### 17.2 Error Handling
 
-**Location:** `internal/middleware/jwt.go`
-
-JSON Web Token authentication with role-based access control.
-
-**Features:**
-- Token validation from header, query, or cookie
-- Configurable signing key and token lookup
-- User context extraction (user_id, username, email, role)
-- Role-based access control helpers
-- Optional authentication for public endpoints
-
-**Token Claims:**
-```go
-type JWTClaims struct {
-    UserID   string `json:"user_id"`
-    Username string `json:"username"`
-    Email    string `json:"email"`
-    Role     string `json:"role"`
-    jwt.RegisteredClaims
-}
-```
-
-**Usage:**
-```go
-// Require authentication
-e.Use(middleware.JWTRequired("secret-key"))
-
-// Optional authentication
-e.Use(middleware.JWTOptional("secret-key"))
-
-// Require admin role
-e.GET("/admin", handler, middleware.RequireAdmin())
-
-// Require specific roles
-e.GET("/dashboard", handler, middleware.RequireRole("user", "admin"))
-```
-
-**Token Generation:**
-```go
-token, err := middleware.GenerateToken(
-    "user-123",
-    "johndoe",
-    "john@example.com",
-    "user",
-    "secret-key",
-    24*time.Hour,
-)
-```
-
-### 17.4 Security Headers Middleware
-
-**Location:** `internal/middleware/security.go`
-
-Adds security headers to HTTP responses.
-
-**Headers Included:**
-- `Content-Security-Policy` - XSS protection
-- `X-Content-Type-Options: nosniff` - Prevent MIME sniffing
-- `X-Frame-Options: DENY` - Clickjacking protection
-- `X-XSS-Protection: 1; mode=block` - XSS filter
-- `Referrer-Policy: strict-origin-when-cross-origin` - Referrer control
-- `Permissions-Policy` - Feature restrictions
-- `Strict-Transport-Security` - HSTS with configurable max-age
-
-**Configuration:**
-```go
-// Default strict security
-middleware.Security()
-
-// Custom CSP
-middleware.SecurityWithConfig("default-src 'self'")
-
-// Permissive for development
-middleware.SecurityPermissive()
-```
-
-### 17.5 Audit Logging Middleware
-
-**Location:** `internal/middleware/audit.go`
-
-Logs all API requests for security auditing and compliance.
-
-**Logged Information:**
-- Timestamp, method, path, query parameters
-- HTTP status code and response latency
-- User ID and username (if authenticated)
-- Client IP address and user agent
-- Request ID for correlation
-
-**Configuration:**
-```go
-// Basic audit logging
-middleware.AuditWithConfig(logger)
-
-// Skip health check endpoints
-middleware.AuditSkipHealthCheck(logger)
-
-// Custom configuration
-middleware.Audit(middleware.AuditConfig{
-    Logger:         logger,
-    LogRequestBody: false,
-    LogHeaders:     false,
-    SensitiveHeaders: []string{"Authorization", "Cookie"},
-})
-```
+All middleware components include proper error handling with standardized response formats following the API response structure.
 
 ## 18. RESILIENCE PATTERNS
 
