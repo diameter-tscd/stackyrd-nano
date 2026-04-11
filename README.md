@@ -7,50 +7,63 @@
   <img src="https://img.shields.io/badge/build-passing-brightgreen.svg" alt="Build Status"/>
   <img src="https://img.shields.io/badge/github-diameter--tscd/stackyrd-181717.svg" alt="GitHub Repo"/>
 </div>
+
 <br>
 
-stackyrd-nano is a lightweight version of stackyrd, production-ready application framework featuring modular architecture, and extensive infrastructure integrations. Built for scalability and ease of deployment.
+## Overview
 
-## Quick Start
+`stackyrd-nano` is a lightweight, focused evolution of stackyrd. It provides an enterprise-grade service fabric foundation for building robust and observable distributed systems in Go. Our goal is to bridge the gap between rapid development cycles and industrial-strength stability, making complex microservices architectures manageable from day one.
 
-### Prerequisites
-- Go 1.21+
-
-### Installation & Run
-
-```bash
-# Clone the repository
-git clone https://github.com/diameter-tscd/stackyrd.git
-cd stackyrd
-
-# Install dependencies
-go mod download
-
-# Run the application
-go run cmd/app/main.go
-
-# To build the application
-go run scripts/build/build.go
-```
-
-## Screenshots
-
-### CLI UI
-![CLI](.assets/console.gif)
+<br>
 
 ## Key Features
 
-- **Modular Services**: Enable/disable services via configuration
-- **Security**: API encryption, authentication, and access controls
-- **Build Tools**: Automated build scripts with backup and archiving
-- **Structured Logging**: Comprehensive console logging with color-coded output
+*   **Modular Services**: Implement a flexible system where services can be individually enabled or disabled via configuration, simplifying deployment and maintenance.
+*   **Security by Design**: Built-in mechanisms for API encryption, comprehensive authentication (e.g., JWT), and granular access controls ensure data protection at every layer.
+*   **Structured Logging**: Provides rich, color-coded console logging output, significantly improving observability during runtime diagnostics.
+*   **Robust Build Tools**: Automated build scripts handle dependencies, backups, and version archiving, ensuring predictable deployment pipelines.
 
-## Documentation
-**[Full Documentation](https://github.com/diameter-tscd/stackyrd/blob/master/docs_wiki)** - Comprehensive guides and references
+<br>
 
-## License
-Apache License Version 2.0: [LICENSE](LICENSE)
+## Getting Started
 
-<div align="center">
-  <img src=".assets/diameter-banner.png" alt="diameter-tscd" style="width: 100%; max-width: 700px;"/>
-</div>
+### Prerequisites
+Before running `stackyrd-nano`, ensure you have:
+*   Go 1.21+ installed on your system.
+
+### Installation & Run
+
+1.  **Clone the Repository**:
+    ```bash
+    git clone https://github.com/diameter-tscd/stackyrd-nano.git
+    cd stackyrd-nano
+    ```
+2.  **Install Dependencies**:
+    The project uses Go Modules, so run:
+    ```bash
+    go mod download
+    ```
+3.  **Run the Application (Development)**:
+    To test and run the service locally using the main entry point:
+    ```bash
+    go run cmd/app/main.go
+    ```
+4.  **Build for Production**:
+    To compile a standalone binary suitable for deployment:
+    ```bash
+    go run scripts/build/build.go
+    ```
+<br>
+
+## Screenshots
+
+![CLI](.assets/console.gif)
+
+## Documentation & Resources
+
+*   **Full Documentation**: Access comprehensive guides, API references, and architectural deep-dives here: [https://github.com/diameter-tscd/stackyrd/blob/master/docs_wiki](https://github.com/diameter-tscd/stackyrd/blob/master/docs_wiki)
+*   **License**: The project is released under the Apache License Version 2.0. See the [LICENSE](LICENSE) file for details.
+
+<br>
+
+**Powered by diameter-tscd**
