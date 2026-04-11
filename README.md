@@ -1,5 +1,5 @@
 <div align="center">
-  <img src=".assets/stackyrd_logo.PNG" alt="stackyrd" style="width: 50%; max-width: 400px;"/>
+  <img src=".assets/nano-banner.png" alt="stackyrd-nano" style="width: 100%; max-width: 700px;"/>
 </div>
 <div align="center">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"/>
@@ -28,12 +28,15 @@ go mod download
 
 # Run the application
 go run cmd/app/main.go
+
+# To build the application
+go run scripts/build/build.go
 ```
 
 ## Screenshots
 
-### Console
-![Backend Console](.assets/Recording_Console.gif)
+### CLI UI
+![CLI](.assets/console.gif)
 
 ## Key Features
 
@@ -43,13 +46,9 @@ go run cmd/app/main.go
 - **Structured Logging**: Comprehensive console logging with color-coded output
 
 ## Documentation
-
 **[Full Documentation](docs_wiki/)** - Comprehensive guides and references
 
 ## License
-
 Apache License Version 2.0: [LICENSE](LICENSE)
-
----
 
 **Powered by diameter-tscd.**
