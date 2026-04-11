@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-//go:embed banner.txt config.yaml
+//go:embed embed/*
 var embeddedFS embed.FS
 
 func main() {
@@ -21,8 +21,8 @@ func main() {
 
 	// Initialize Afero embedded filesystem manager FIRST
 	aliasMap := map[string]string{
-		"config": "config.yaml",
-		"banner": "banner.txt",
+		"config": "embed/config.yaml",
+		"banner": "embed/banner.txt",
 	}
 
 	// Determine environment mode
@@ -30,7 +30,7 @@ func main() {
 	infrastructure.Init(embeddedFS, aliasMap, isDev)
 
 	// Configure Viper to use Afero filesystem for config loading
-	file, err := embeddedFS.Open("config.yaml")
+	file, err := embeddedFS.Open(aliasMap["config"])
 	if err != nil {
 		fmt.Printf("Fatal error config FS: %v\n", err)
 		os.Exit(1)

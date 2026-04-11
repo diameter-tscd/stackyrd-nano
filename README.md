@@ -46,7 +46,7 @@ go run scripts/build/build.go
 - **Structured Logging**: Comprehensive console logging with color-coded output
 
 ## Documentation
-**[Full Documentation](docs_wiki/)** - Comprehensive guides and references
+**[Full Documentation](https://github.com/diameter-tscd/stackyrd/blob/master/docs_wiki)** - Comprehensive guides and references
 
 ## License
 Apache License Version 2.0: [LICENSE](LICENSE)

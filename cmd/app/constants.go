@@ -22,9 +22,6 @@ const (
 	DefaultStartupDelay   = 15 // seconds
 	DefaultBannerPath     = "banner.txt"
 
-	// File paths
-	WebFolderPath = "web"
-
 	// Service names for logging and initialization
 	ServiceConfigName = "Configuration"
 	ServiceCronName   = "Cron Scheduler"
@@ -38,7 +35,6 @@ const (
 	ErrInvalidConfigURLFormat = "invalid config URL format"
 	ErrPortError              = "port error"
 	ErrStepFailed             = "step failed"
-	ErrWebFolderNotFound      = "web folder not found, disabling web monitoring"
 
 	// Configuration keys
 	ConfigKeyWebFolder = "web"

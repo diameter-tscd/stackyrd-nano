@@ -5,9 +5,9 @@ on:
     - cron: '0 2 * * *'  # Daily at 2 AM
   workflow_dispatch:
   push:
-    branches: [ main, master, development ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main, master, development ]
+    branches: [ main, master ]
 
 jobs:
   golang-security:

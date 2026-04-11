@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/url"
-	"os"
 	"stackyrd-nano/config"
 	"stackyrd-nano/pkg/infrastructure"
 	"stackyrd-nano/pkg/utils"
@@ -63,11 +62,6 @@ func (cm *ConfigManager) loadConfigFromFile() (*config.Config, error) {
 
 // ValidateConfig validates the loaded configuration
 func (cm *ConfigManager) ValidateConfig(cfg *config.Config) error {
-	// Check if web folder exists, if not, disable web monitoring
-	if _, err := os.Stat(WebFolderPath); os.IsNotExist(err) {
-		fmt.Printf("%s %s%s\n", ColorYellow, ErrWebFolderNotFound, ColorReset)
-		cfg.Monitoring.Enabled = false
-	}
 
 	// Validate port availability
 	if err := utils.CheckPortAvailability(cfg.Server.Port); err != nil {
