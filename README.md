@@ -9,7 +9,7 @@
 </div>
 <br>
 
-stackyrd is a lightweight, production-ready application framework featuring modular architecture, comprehensive monitoring, real-time dashboards, and extensive infrastructure integrations. Built for scalability and ease of deployment.
+stackyrd-nano is a lightweight version of stackyrd, production-ready application framework featuring modular architecture, and extensive infrastructure integrations. Built for scalability and ease of deployment.
 
 ## Quick Start
 
