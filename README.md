@@ -14,16 +14,12 @@
 
 `stackyrd-nano` is a lightweight, focused evolution of stackyrd. It provides an enterprise-grade service fabric foundation for building robust and observable distributed systems in Go. Our goal is to bridge the gap between rapid development cycles and industrial-strength stability, making complex microservices architectures manageable from day one.
 
-<br>
-
 ## Key Features
 
 *   **Modular Services**: Implement a flexible system where services can be individually enabled or disabled via configuration, simplifying deployment and maintenance.
 *   **Security by Design**: Built-in mechanisms for API encryption, comprehensive authentication (e.g., JWT), and granular access controls ensure data protection at every layer.
 *   **Structured Logging**: Provides rich, color-coded console logging output, significantly improving observability during runtime diagnostics.
 *   **Robust Build Tools**: Automated build scripts handle dependencies, backups, and version archiving, ensuring predictable deployment pipelines.
-
-<br>
 
 ## Getting Started
 
@@ -53,9 +49,8 @@ Before running `stackyrd-nano`, ensure you have:
     ```bash
     go run scripts/build/build.go
     ```
-<br>
 
-## Screenshots
+## Preview
 
 ![CLI](.assets/console.gif)
 

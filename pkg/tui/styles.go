@@ -7,13 +7,40 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// Standard color palette (single source of truth for entire TUI package)
+const (
+	ColorPrimary    = "#8daea5"
+	ColorSecondary  = "#6272A4"
+	ColorForeground = "#F8F8F2"
+	ColorBackground = "#282A36"
+	ColorSuccess    = "#50FA7B"
+	ColorWarning    = "#F1FA8C"
+	ColorError      = "#FF5555"
+	ColorAccent     = "#BD93F9"
+	ColorInfo       = "#8BE9FD"
+	ColorDim        = "#44475A"
+)
+
 // Fancy ASCII art banners for enhanced visual appeal
 var (
 	// Gradient colors for text effects
-	GradientPink   = []string{"#8daea5", "#8daea5", "#8daea5", "#8daea5", "#8daea5"}
-	GradientPurple = []string{"#BD93F9", "#9B59B6", "#8E44AD", "#6C3483", "#5B2C6F"}
-	GradientCyan   = []string{"#8BE9FD", "#00D0FF", "#00B4D8", "#0096C7", "#0077B6"}
-	GradientGreen  = []string{"#50FA7B", "#00FF7F", "#00FA9A", "#00CED1", "#20B2AA"}
+	GradientPink   = []string{ColorPrimary, ColorPrimary, ColorPrimary, ColorPrimary, ColorPrimary}
+	GradientPurple = []string{ColorAccent, "#9B59B6", "#8E44AD", "#6C3483", "#5B2C6F"}
+	GradientCyan   = []string{ColorInfo, "#00D0FF", "#00B4D8", "#0096C7", "#0077B6"}
+	GradientGreen  = []string{ColorSuccess, "#00FF7F", "#00FA9A", "#00CED1", "#20B2AA"}
+)
+
+// Base styles available for all TUI components
+var (
+	// Text styles
+	PrimaryStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color(ColorPrimary))
+	SecondaryStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(ColorSecondary))
+	SuccessStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color(ColorSuccess))
+	WarningStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color(ColorWarning))
+	ErrorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color(ColorError))
+	InfoStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color(ColorInfo))
+	DimStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color(ColorDim))
+	BoldStyle      = lipgloss.NewStyle().Bold(true)
 )
 
 // TextEffect applies a gradient effect to text
