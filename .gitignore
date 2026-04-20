@@ -47,7 +47,6 @@ config.yaml.bak
 # Build artifacts
 /bin/
 /dist/
-dist/
 /build/
 
 # Debug files
@@ -67,3 +66,4 @@ Thumbs.db
 
 # Files
 stackyrd
+stackyrd-nano

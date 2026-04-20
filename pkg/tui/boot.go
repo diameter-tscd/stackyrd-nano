@@ -10,6 +10,24 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// ServiceStatus represents the status of a service during startup
+type ServiceStatus struct {
+	Name    string
+	Status  string // "pending", "loading", "success", "error", "skipped"
+	Message string
+}
+
+// StartupConfig contains configuration for the startup TUI
+type StartupConfig struct {
+	AppName     string
+	AppVersion  string
+	Banner      string
+	Port        string
+	MonitorPort string
+	Env         string
+	IdleSeconds int // How long to display the boot screen (0 to skip immediately)
+}
+
 // ServiceInitFunc is a function that initializes a service
 // Returns an error if initialization fails
 type ServiceInitFunc func() error
