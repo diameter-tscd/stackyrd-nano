@@ -4,8 +4,9 @@
 <div align="center">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"/>
   <img src="https://img.shields.io/badge/go-1.21%2B-00ADD8.svg" alt="Go Version"/>
-  <img src="https://img.shields.io/badge/build-passing-brightgreen.svg" alt="Build Status"/>
-  <img src="https://img.shields.io/badge/github-diameter--tscd/stackyrd-181717.svg" alt="GitHub Repo"/>
+  <img src="https://github.com/diameter-tscd/stackyrd-nano/actions/workflows/go-build.yml/badge.svg" alt="Build Status"/>
+  <img src="https://github.com/diameter-tscd/stackyrd-nano/actions/workflows/security.yml/badge.svg" alt="Security Status"/>
+  <img src="https://img.shields.io/badge/github-diameter--tscd/stackyrd-nano181717.svg" alt="GitHub Repo"/>
 </div>
 
 <br>
