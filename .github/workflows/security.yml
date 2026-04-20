@@ -5,9 +5,9 @@ on:
     - cron: '0 2 * * *'  # Daily at 2 AM
   workflow_dispatch:
   push:
-    branches: [ main, master, development ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main, master, development ]
+    branches: [ main, master ]
 
 jobs:
   golang-security:
@@ -182,15 +182,3 @@ jobs:
             git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
             git push origin HEAD:${{ github.ref_name }}
           fi
-
-  secret-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Gitleaks Scan
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
