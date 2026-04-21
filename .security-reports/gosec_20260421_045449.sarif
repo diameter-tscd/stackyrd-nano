@@ -1047,43 +1047,17 @@
 						{
 							"physicalLocation": {
 								"artifactLocation": {
-									"uri": "docs_wiki/examples/response_examples.go"
+									"uri": "cmd/app/main.go"
 								},
 								"region": {
 									"endColumn": 2,
-									"endLine": 107,
-									"snippet": {
-										"text": "c.ShouldBindQuery(\u0026search)"
-									},
-									"sourceLanguage": "go",
-									"startColumn": 2,
-									"startLine": 107
-								}
-							}
-						}
-					],
-					"message": {
-						"text": "Errors unhandled"
-					},
-					"ruleId": "G104"
-				},
-				{
-					"level": "warning",
-					"locations": [
-						{
-							"physicalLocation": {
-								"artifactLocation": {
-									"uri": "cmd/app/application.go"
-								},
-								"region": {
-									"endColumn": 2,
-									"endLine": 268,
+									"endLine": 368,
 									"snippet": {
 										"text": "srv.Shutdown(context.Background(), app.logger)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 2,
-									"startLine": 268
+									"startLine": 368
 								}
 							}
 						}
@@ -1099,43 +1073,17 @@
 						{
 							"physicalLocation": {
 								"artifactLocation": {
-									"uri": "cmd/app/application.go"
+									"uri": "cmd/app/main.go"
 								},
 								"region": {
-									"endColumn": 3,
-									"endLine": 253,
+									"endColumn": 2,
+									"endLine": 357,
 									"snippet": {
 										"text": "srv.Shutdown(context.Background(), app.logger)"
 									},
 									"sourceLanguage": "go",
-									"startColumn": 3,
-									"startLine": 253
-								}
-							}
-						}
-					],
-					"message": {
-						"text": "Errors unhandled"
-					},
-					"ruleId": "G104"
-				},
-				{
-					"level": "warning",
-					"locations": [
-						{
-							"physicalLocation": {
-								"artifactLocation": {
-									"uri": "cmd/app/application.go"
-								},
-								"region": {
-									"endColumn": 3,
-									"endLine": 250,
-									"snippet": {
-										"text": "srv.Shutdown(context.Background(), app.logger)"
-									},
-									"sourceLanguage": "go",
-									"startColumn": 3,
-									"startLine": 250
+									"startColumn": 2,
+									"startLine": 357
 								}
 							}
 						}
