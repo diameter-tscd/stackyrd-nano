@@ -11,7 +11,7 @@ on:
 
 jobs:
   golang-security:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     permissions:
       contents: write  # Changed from read to write for commit access
@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -28,7 +28,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25.5'  # Fixed version (1.25.3 doesn't exist yet)
+          go-version: '1.25.5'
 
       - name: Run Gosec
         uses: securego/gosec@master
