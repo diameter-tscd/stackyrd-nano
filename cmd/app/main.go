@@ -184,20 +184,20 @@ func main() {
 
 	file, err := embeddedFS.Open("embed/config.yaml")
 	if err != nil {
-		fmt.Printf("Fatal error config FS: %v\n", err)
+		fmt.Printf("Fatal error config FS: %v \n", err)
 		os.Exit(1)
 	}
 	defer file.Close()
 
 	viper.SetConfigType("yaml")
 	if err := viper.ReadConfig(file); err != nil {
-		fmt.Printf("Fatal error config read: %v\n", err)
+		fmt.Printf("Fatal error config read: %v \n", err)
 		os.Exit(1)
 	}
 
 	app := NewApplication(NewConfigManager(flags.ConfigURL))
 	if err := app.Run(); err != nil {
-		fmt.Printf("Fatal error: %v\n", err)
+		fmt.Printf("Fatal error: %v \n", err)
 		os.Exit(1)
 	}
 }
@@ -220,7 +220,7 @@ func parseFlags() *utils.ParsedFlags {
 
 	flags, err := utils.ParseFlags(flagDefinitions)
 	if err != nil {
-		fmt.Printf("Error parsing flags: %v\n", err)
+		fmt.Printf("Error parsing flags: %v \n", err)
 		utils.PrintUsage(flagDefinitions, AppName)
 		os.Exit(1)
 	}
@@ -242,7 +242,7 @@ func (app *Application) Run() error {
 	}
 
 	for i, step := range steps {
-		fmt.Printf("[%d/%d] %s\n", i+1, len(steps), step.Name)
+		fmt.Printf("[%d/%d] %s \n", i+1, len(steps), step.Name)
 		if err := step.Fn(ctx); err != nil {
 			return fmt.Errorf("%s: %w", ErrStepFailed, err)
 		}
@@ -280,6 +280,7 @@ func (app *Application) initLoggerStep(ctx *AppContext) error {
 }
 
 func (app *Application) startAppStep(ctx *AppContext) error {
+	utils.ClearScreen()
 	if app.config.App.EnableTUI {
 		app.runWithTUI()
 	} else {

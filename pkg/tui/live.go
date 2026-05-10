@@ -34,7 +34,6 @@ type LogEntry struct {
 
 // LiveModel is the Bubble Tea model for the live running dashboard
 type LiveModel struct {
-	spinner         spinner.Model
 	textinput       textinput.Model
 	config          LiveConfig
 	allLogs         []LogEntry
@@ -55,6 +54,7 @@ type LiveModel struct {
 	// Reusable dialog components
 	exitDialog   *template.DialogModel
 	filterDialog *template.DialogModel
+	queryDialog  *template.DialogModel
 }
 
 // Live TUI styles
@@ -88,10 +88,6 @@ var (
 
 // NewLiveModel creates a new live TUI model
 func NewLiveModel(cfg LiveConfig) *LiveModel {
-	s := spinner.New()
-	s.Spinner = spinner.Dot
-	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("#8daea5"))
-
 	// Initialize text input for filtering
 	ti := textinput.New()
 	ti.Placeholder = "Filter logs..."
@@ -104,9 +100,9 @@ func NewLiveModel(cfg LiveConfig) *LiveModel {
 	// Initialize reusable dialogs
 	exitDialog := template.NewExitConfirmationDialog()
 	filterDialog := template.NewFilterDialog("")
+	queryDialog := template.NewQueryDialog("")
 
 	return &LiveModel{
-		spinner:         s,
 		textinput:       ti,
 		config:          cfg,
 		allLogs:         make([]LogEntry, 0),
@@ -119,6 +115,7 @@ func NewLiveModel(cfg LiveConfig) *LiveModel {
 		maxLogs:         1000, // Unlimited logs (0 disables the limit)
 		exitDialog:      exitDialog,
 		filterDialog:    filterDialog,
+		queryDialog:     queryDialog,
 	}
 }
 
@@ -133,7 +130,6 @@ func liveTickCmd() tea.Cmd {
 
 func (m *LiveModel) Init() tea.Cmd {
 	return tea.Batch(
-		m.spinner.Tick,
 		liveTickCmd(),
 	)
 }
@@ -178,15 +174,31 @@ func (m *LiveModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
+		if m.queryDialog.IsActive() {
+			cmd := m.queryDialog.Update(msg)
+			if result := m.queryDialog.GetResult(); result != nil {
+				if result.Confirmed {
+					if result.Value != "" {
+						m.updateQuery(result.Value)
+					}
+				}
+			}
+			return m, cmd
+		}
+
 		// Handle normal navigation
 		switch msg.String() {
-		case "q", "esc", "ctrl+c":
+		case "ctrl+c":
 			// Show exit confirmation dialog
 			m.exitDialog.Show()
 			return m, nil
 		case "/":
 			// Show filter dialog
 			m.filterDialog.Show()
+			return m, nil
+		case "ctrl+p":
+			// Show query dialog
+			m.queryDialog.Show()
 			return m, nil
 		case "down", "j":
 			// Scroll down
@@ -212,7 +224,7 @@ func (m *LiveModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Go to bottom
 			m.scrollToBottom()
 			return m, nil
-		case "f1":
+		case "ctrl+l":
 			// Toggle auto-scroll
 			m.autoScroll = !m.autoScroll
 			if m.autoScroll {
@@ -237,7 +249,6 @@ func (m *LiveModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case spinner.TickMsg:
-		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
 
 	// case liveTickMsg:
@@ -364,11 +375,9 @@ func (m *LiveModel) View() string {
 
 	// Status line
 	uptime := time.Since(m.startTime).Round(time.Second)
-	statusLine := fmt.Sprintf("  %s %s  ●  Service Port: %s  ●  Monitor Port: %s  ●  Env: %s  ●  Uptime: %s",
-		m.spinner.View(),
+	statusLine := fmt.Sprintf("  %s  ●  Service Port: %s  ●  Env: %s  ●  Uptime: %s  ",
 		liveStatusStyle.Render("RUNNING"),
 		liveInfoStyle.Render(m.config.Port),
-		liveInfoStyle.Render(m.config.MonitorPort),
 		liveInfoStyle.Render(m.config.Env),
 		liveInfoStyle.Render(uptime.String()),
 	)
@@ -431,6 +440,8 @@ func (m *LiveModel) View() string {
 	var footerText string
 	if m.filterDialog.IsActive() {
 		footerText = liveDimStyle.Render("Enter: apply filter ● Esc: cancel")
+	} else if m.queryDialog.IsActive() {
+		footerText = liveDimStyle.Render("Enter: exec query ● Esc: cancel")
 	} else {
 		filterInfo := ""
 		if m.filterText != "" {
@@ -440,7 +451,7 @@ func (m *LiveModel) View() string {
 		if m.autoScroll {
 			autoScrollInfo = "Auto-scroll: ON ● "
 		}
-		footerText = liveDimStyle.Render(fmt.Sprintf("%s%sLast update: %s ● q: exit ● /: filter ● F1: auto-scroll ● F2: clear logs ● ↑↓: scroll",
+		footerText = liveDimStyle.Render(fmt.Sprintf("%s%sLast update: %s ● ctrl+c: exit ● /: filter ● ctrl+l: auto-scroll ● F2: clear logs",
 			filterInfo, autoScrollInfo, time.Now().Format("15:04:05")))
 	}
 	mainContent.WriteString("\n")
@@ -456,6 +467,10 @@ func (m *LiveModel) View() string {
 
 	if m.filterDialog.IsActive() {
 		return m.filterDialog.View(m.width, m.height)
+	}
+
+	if m.queryDialog.IsActive() {
+		return m.queryDialog.View(m.width, m.height)
 	}
 
 	// Wrap entire content with minimal padding
@@ -672,6 +687,13 @@ func (m *LiveModel) updateFilteredLogs() {
 	}
 
 	m.filteredLogs = filtered
+}
+
+func (m *LiveModel) updateQuery(query string) {
+	// execute query
+	go func() {
+		m.AddLog("info", "Execute query: "+query)
+	}()
 }
 
 // Scroll methods for navigating through logs
