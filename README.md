@@ -53,7 +53,7 @@ go run scripts/build/build.go
 
 ## Preview
 
-![CLI](.assets/console.gif)
+![Console](.assets/console.png)
 
 ## Documentation & Resources
 
