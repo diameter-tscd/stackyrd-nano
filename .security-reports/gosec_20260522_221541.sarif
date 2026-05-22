@@ -947,13 +947,13 @@
 								},
 								"region": {
 									"endColumn": 3,
-									"endLine": 570,
+									"endLine": 585,
 									"snippet": {
 										"text": "t.program.Run()"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 3,
-									"startLine": 570
+									"startLine": 585
 								}
 							}
 						}
@@ -1051,13 +1051,13 @@
 								},
 								"region": {
 									"endColumn": 2,
-									"endLine": 368,
+									"endLine": 369,
 									"snippet": {
 										"text": "srv.Shutdown(context.Background(), app.logger)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 2,
-									"startLine": 368
+									"startLine": 369
 								}
 							}
 						}
@@ -1077,13 +1077,13 @@
 								},
 								"region": {
 									"endColumn": 2,
-									"endLine": 357,
+									"endLine": 358,
 									"snippet": {
 										"text": "srv.Shutdown(context.Background(), app.logger)"
 									},
 									"sourceLanguage": "go",
 									"startColumn": 2,
-									"startLine": 357
+									"startLine": 358
 								}
 							}
 						}
