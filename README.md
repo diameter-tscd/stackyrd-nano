@@ -1,5 +1,5 @@
 <div align="center">
-  <img src=".assets/nano-banner.png" alt="stackyrd-nano" style="width: 100%; max-width: 700px;"/>
+  <img src=".github/assets/nano-banner.png" alt="stackyrd-nano" style="width: 100%; max-width: 700px;"/>
 </div>
 <div align="center">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"/>
@@ -53,7 +53,7 @@ go run scripts/build/build.go
 
 ## Preview
 
-![Console](.assets/console.png)
+![Console](.github/assets/console.png)
 
 ## Documentation & Resources
 
