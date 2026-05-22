@@ -2,33 +2,40 @@ package config
 
 import (
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spf13/viper"
 )
 
-// setupViperDefaults configures viper with default values
+// _configInitOnce guarantees setupViperDefaults() runs exactly once,
+// protecting viper's global maps from concurrent mutation.
+var _configInitOnce sync.Once
+
+// setupViperDefaults configures viper with default values (idempotent, called once)
 func setupViperDefaults() {
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
+	_configInitOnce.Do(func() {
+		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+		viper.AutomaticEnv()
 
-	// Defaults
-	viper.SetDefault("app.name", "Golang App")
-	viper.SetDefault("app.env", "development")
-	viper.SetDefault("app.banner_path", "banner.txt")
-	viper.SetDefault("app.startup_delay", 15)   // 15 seconds default
-	viper.SetDefault("app.quiet_startup", true) // clean console by default
-	viper.SetDefault("app.enable_tui", false)   // TUI enabled by default
-	viper.SetDefault("server.port", "8080")
-	viper.SetDefault("auth.type", "none")
-	// Services config uses a dynamic map - no hardcoded defaults needed
-	// Services default to enabled if not specified (see ServicesConfig.IsEnabled)
+		// Defaults
+		viper.SetDefault("app.name", "Golang App")
+		viper.SetDefault("app.env", "development")
+		viper.SetDefault("app.banner_path", "banner.txt")
+		viper.SetDefault("app.startup_delay", 15)   // 15 seconds default
+		viper.SetDefault("app.quiet_startup", true) // clean console by default
+		viper.SetDefault("app.enable_tui", false)   // TUI enabled by default
+		viper.SetDefault("server.port", "8080")
+		viper.SetDefault("auth.type", "none")
+		// Services config uses a dynamic map - no hardcoded defaults needed
+		// Services default to enabled if not specified (see ServicesConfig.IsEnabled)
 
-	viper.SetDefault("redis.enabled", false)
-	viper.SetDefault("kafka.enabled", false)
-	viper.SetDefault("postgres.enabled", false)
-	viper.SetDefault("mongo.enabled", false)
-	viper.SetDefault("swagger.base_path", "/swagger")
+		viper.SetDefault("redis.enabled", false)
+		viper.SetDefault("kafka.enabled", false)
+		viper.SetDefault("postgres.enabled", false)
+		viper.SetDefault("mongo.enabled", false)
+		viper.SetDefault("swagger.base_path", "/swagger")
+	})
 }
 
 type Config struct {
@@ -112,7 +119,8 @@ type AppConfig struct {
 }
 
 type ServerConfig struct {
-	Port string `mapstructure:"port"`
+	Port         string `mapstructure:"port"`
+	RestartToken string `mapstructure:"restart_token"` // non-empty value required to POST /restart
 }
 
 // ServicesConfig is a dynamic map of service names to their enabled status.

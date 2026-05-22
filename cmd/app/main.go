@@ -364,8 +364,12 @@ func (app *Application) handleShutdown(liveTUI *tui.LiveTUI, srv *server.Server)
 func (app *Application) handleConsoleShutdown(srv *server.Server) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	<-sigChan
-	app.logger.Warn("Shutting down...")
+	select {
+	case <-sigChan:
+		app.logger.Warn("Shutting down...")
+	case <-utils.ShutdownChan:
+		app.logger.Warn("Shutting down...")
+	}
 	srv.Shutdown(context.Background(), app.logger)
 	time.Sleep(ShutdownDelay)
 	os.Exit(0)

@@ -24,13 +24,26 @@ func (d *Dependencies) Get(name string) (interface{}, bool) {
 	return comp, ok
 }
 
-// GetAll returns all registered components
+// GetAll returns a snapshot copy of all registered components.
+// For zero-allocation iteration, use RangeAll() instead.
 func (d *Dependencies) GetAll() map[string]interface{} {
 	result := make(map[string]interface{})
-	for k, v := range d.components {
-		result[k] = v
-	}
+	d.RangeAll(func(key, value interface{}) bool {
+		if s, ok := key.(string); ok {
+			result[s] = value
+		}
+		return true
+	})
 	return result
+}
+
+// RangeAll iterates over all components without allocating. f must return true to continue.
+func (d *Dependencies) RangeAll(f func(key interface{}, value interface{}) bool) {
+	for key, value := range d.components {
+		if !f(key, value) {
+			return
+		}
+	}
 }
 
 // GetTyped retrieves component with type assertion

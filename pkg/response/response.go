@@ -77,22 +77,27 @@ func (p *PaginationRequest) GetOrder() string {
 	return p.Order
 }
 
+// newResponseBase builds the common response fields with a single time.Now() call.
+// MED-1 fix: one time.Now() per response instead of two separate syscalls.
+func newResponseBase(success bool, statusCode int, message string, correlationID string) Response {
+	now := time.Now()
+	return Response{
+		Success:       success,
+		Status:        statusCode,
+		Message:       message,
+		Timestamp:     now.Unix(),
+		Datetime:      now.Format(time.RFC3339),
+		CorrelationID: correlationID,
+	}
+}
+
 // Success sends a successful response
 func Success(c *gin.Context, data interface{}, message ...string) {
 	msg := ""
 	if len(message) > 0 {
 		msg = message[0]
 	}
-
-	c.JSON(http.StatusOK, Response{
-		Success:       true,
-		Status:        http.StatusOK,
-		Message:       msg,
-		Data:          data,
-		Timestamp:     time.Now().Unix(),
-		Datetime:      time.Now().Format(time.RFC3339),
-		CorrelationID: getCorrelationID(c),
-	})
+	c.JSON(http.StatusOK, newResponseBase(true, http.StatusOK, msg, getCorrelationID(c)))
 }
 
 // SuccessWithMeta sends a successful response with metadata
@@ -101,17 +106,10 @@ func SuccessWithMeta(c *gin.Context, data interface{}, meta *Meta, message ...st
 	if len(message) > 0 {
 		msg = message[0]
 	}
-
-	c.JSON(http.StatusOK, Response{
-		Success:       true,
-		Status:        http.StatusOK,
-		Message:       msg,
-		Data:          data,
-		Meta:          meta,
-		Timestamp:     time.Now().Unix(),
-		Datetime:      time.Now().Format(time.RFC3339),
-		CorrelationID: getCorrelationID(c),
-	})
+	resp := newResponseBase(true, http.StatusOK, msg, getCorrelationID(c))
+	resp.Data = data
+	resp.Meta = meta
+	c.JSON(http.StatusOK, resp)
 }
 
 // Created sends a 201 Created response
@@ -120,16 +118,7 @@ func Created(c *gin.Context, data interface{}, message ...string) {
 	if len(message) > 0 {
 		msg = message[0]
 	}
-
-	c.JSON(http.StatusCreated, Response{
-		Success:       true,
-		Status:        http.StatusCreated,
-		Message:       msg,
-		Data:          data,
-		Timestamp:     time.Now().Unix(),
-		Datetime:      time.Now().Format(time.RFC3339),
-		CorrelationID: getCorrelationID(c),
-	})
+	c.JSON(http.StatusCreated, newResponseBase(true, http.StatusCreated, msg, getCorrelationID(c)))
 }
 
 // NoContent sends a 204 No Content response
@@ -193,7 +182,7 @@ func InternalServerError(c *gin.Context, message ...string) {
 	Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", msg)
 }
 
-// ServiceUnavailable sends a 503 Service Unavailable error response
+// ServiceUnavailable sends a 503 Service Unavailable response
 func ServiceUnavailable(c *gin.Context, message ...string) {
 	msg := "Service temporarily unavailable"
 	if len(message) > 0 {
@@ -209,6 +198,7 @@ func Error(c *gin.Context, statusCode int, errorCode string, message string, det
 		errorDetails = details[0]
 	}
 
+	now := time.Now()
 	c.JSON(statusCode, Response{
 		Success: false,
 		Status:  statusCode,
@@ -217,8 +207,8 @@ func Error(c *gin.Context, statusCode int, errorCode string, message string, det
 			Message: message,
 			Details: errorDetails,
 		},
-		Timestamp:     time.Now().Unix(),
-		Datetime:      time.Now().Format(time.RFC3339),
+		Timestamp:     now.Unix(),
+		Datetime:      now.Format(time.RFC3339),
 		CorrelationID: getCorrelationID(c),
 	})
 }

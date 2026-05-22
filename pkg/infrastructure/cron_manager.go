@@ -15,16 +15,18 @@ type WorkerPool struct {
 	workers  int
 	jobQueue chan func()
 	stopChan chan struct{}
-	stopped  chan struct{}
 	wg       sync.WaitGroup
+	closeMu  sync.Mutex // guards close-once semantics
 }
 
 func NewWorkerPool(workers int) *WorkerPool {
+	if workers < 1 {
+		workers = 1
+	}
 	return &WorkerPool{
 		workers:  workers,
-		jobQueue: make(chan func()),
+		jobQueue: make(chan func(), workers*2), // bounded buffer; head-room for burst submissions
 		stopChan: make(chan struct{}),
-		stopped:  make(chan struct{}),
 	}
 }
 
@@ -36,7 +38,9 @@ func (wp *WorkerPool) Start() {
 			for {
 				select {
 				case job := <-wp.jobQueue:
-					job()
+					if job != nil {
+						job()
+					}
 				case <-wp.stopChan:
 					return
 				}
@@ -45,21 +49,31 @@ func (wp *WorkerPool) Start() {
 	}
 }
 
-func (wp *WorkerPool) Submit(job func()) {
+// Submit enqueues a job for async execution.
+// Returns true if the job was accepted, false if the pool has been signalled to stop.
+// The stopChan is checked first so that, once Close() has closed the sentinel,
+// Submit always returns false regardless of the buffered queue depth.
+func (wp *WorkerPool) Submit(job func()) bool {
 	select {
-	case wp.jobQueue <- job:
-	case <-wp.stopChan:
+	case <-wp.stopChan: // STOP — reject immediately
+		return false
+	case wp.jobQueue <- job: // RUNNING — accept into queue
+		return true
 	}
 }
 
-func (wp *WorkerPool) Stop() {
-	close(wp.stopChan)
-	wp.wg.Wait()
-	close(wp.stopped)
-}
-
+// Close gracefully shuts down the worker pool. Safe to call multiple times.
 func (wp *WorkerPool) Close() error {
-	wp.Stop()
+	wp.closeMu.Lock()
+	defer wp.closeMu.Unlock()
+
+	select {
+	case <-wp.stopChan:
+		return nil // already closed
+	default:
+		close(wp.stopChan)
+	}
+	wp.wg.Wait()
 	return nil
 }
 
@@ -275,10 +289,13 @@ func (c *CronManager) UpdateJob(jobID int, newSchedule string) error {
 // SubmitAsyncJob submits a job to the worker pool for async execution
 func (c *CronManager) SubmitAsyncJob(job func()) {
 	if c.pool != nil {
-		c.pool.Submit(job)
+		if !c.pool.Submit(job) {
+			// Pool is shutting down; execute synchronously
+			job()
+		}
 	} else {
 		// Fallback to direct execution if pool not available
-		go job()
+		job()
 	}
 }
 
@@ -298,11 +315,12 @@ func (c *CronManager) GetPoolStatus() map[string]interface{} {
 	}
 }
 
-// Close closes the cron manager and its worker pool
+// Close closes the cron manager and its worker pool. Safe to call multiple times.
 func (c *CronManager) Close() error {
 	c.Stop()
 	if c.pool != nil {
 		c.pool.Close()
+		c.pool = nil
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -34,17 +35,12 @@ type EventBroadcaster struct {
 
 // NewEventBroadcaster creates a new event broadcaster
 func NewEventBroadcaster() *EventBroadcaster {
-	eb := &EventBroadcaster{
+	return &EventBroadcaster{
 		streams:   make(map[string][]*StreamClient),
 		clients:   make(map[string]*StreamClient),
 		nextID:    1,
 		clientTTL: 24 * time.Hour, // Clients automatically removed after 24 hours
 	}
-
-	// Start cleanup routine
-	go eb.cleanupRoutine()
-
-	return eb
 }
 
 // Subscribe creates a new client and subscribes to a stream
@@ -87,25 +83,28 @@ func (eb *EventBroadcaster) Unsubscribe(clientID string) {
 		}
 	}
 
-	// Remove from clients map
+	// Remove from clients map and close channel
 	delete(eb.clients, clientID)
-
-	// Close channel safely
-	select {
-	case <-client.Channel:
-	default:
-		close(client.Channel)
-	}
+	close(client.Channel)
 }
 
 // Broadcast sends an event to all clients subscribed to a stream
 func (eb *EventBroadcaster) Broadcast(streamID string, eventType string, message string, data map[string]interface{}) {
+	if eventType == "" {
+		eventType = "default"
+	}
+
 	eb.mu.RLock()
 	clients := eb.streams[streamID]
+	count := len(clients)
 	eb.mu.RUnlock()
 
+	if count == 0 {
+		return // fast-exit: nothing to do
+	}
+
 	event := EventData{
-		ID:        fmt.Sprintf("evt_%d", time.Now().UnixNano()),
+		ID:        strconv.FormatInt(time.Now().UnixNano(), 10),
 		Type:      eventType,
 		Message:   message,
 		Data:      data,
@@ -116,34 +115,61 @@ func (eb *EventBroadcaster) Broadcast(streamID string, eventType string, message
 	for _, client := range clients {
 		select {
 		case client.Channel <- event:
-			// Message sent successfully
 		default:
-			// Channel full, skip this client
+			// Channel full — drop this message for this client
 		}
 	}
 }
 
 // BroadcastToAll sends an event to all clients across all streams
 func (eb *EventBroadcaster) BroadcastToAll(eventType string, message string, data map[string]interface{}) {
+	if eventType == "" {
+		eventType = "default"
+	}
+
 	eb.mu.RLock()
-	defer eb.mu.RUnlock()
+	total := len(eb.clients)
+	if total == 0 {
+		eb.mu.RUnlock()
+		return // fast-exit: nothing to do
+	}
+
+	type target struct {
+		client  *StreamClient
+		streams map[string][]*StreamClient
+	}
+	// Snapshot both maps under the read-lock; send after releasing
+	clientList := make(map[string]*StreamClient, total)
+	streamSnap := make(map[string][]*StreamClient, len(eb.streams))
+	for k, v := range eb.clients {
+		clientList[k] = v
+	}
+	for k, v := range eb.streams {
+		streamSnap[k] = v
+	}
+	eb.mu.RUnlock()
 
 	event := EventData{
-		ID:        fmt.Sprintf("evt_%d", time.Now().UnixNano()),
+		ID:        strconv.FormatInt(time.Now().UnixNano(), 10),
 		Type:      eventType,
 		Message:   message,
 		Data:      data,
 		Timestamp: time.Now().Unix(),
 	}
 
-	for _, clients := range eb.streams {
+	// Collect unique clients from all streams
+	seen := make(map[*StreamClient]struct{})
+	for _, clients := range streamSnap {
 		for _, client := range clients {
-			select {
-			case client.Channel <- event:
-				// Message sent successfully
-			default:
-				// Channel full, skip this client
-			}
+			seen[client] = struct{}{}
+		}
+	}
+
+	for client := range seen {
+		select {
+		case client.Channel <- event:
+		default:
+			// Channel full — drop
 		}
 	}
 }
@@ -198,14 +224,4 @@ func (eb *EventBroadcaster) IsStreamActive(streamID string) bool {
 
 	clients, exists := eb.streams[streamID]
 	return exists && len(clients) > 0
-}
-
-// cleanupRoutine removes stale clients (not used in this implementation)
-func (eb *EventBroadcaster) cleanupRoutine() {
-	ticker := time.NewTicker(1 * time.Hour)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		// Could implement TTL-based cleanup here if needed
-	}
 }

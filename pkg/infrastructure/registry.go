@@ -81,15 +81,24 @@ func (r *ComponentRegistry) GetAll() map[string]InfrastructureComponent {
 	return result
 }
 
-// CloseAll closes all components
+// CloseAll closes all components. Safe to call multiple times.
+// Threading note: we snapshot the component list under a brief write-lock, then
+// nil out the map so concurrent Get() calls receive an immediate "not-found"
+// (zero-value bool=false) instead of blocking on a read-lock while Close() runs.
+// Actual Close() calls happen outside any lock to prevent dloclassRecursion.
 func (r *ComponentRegistry) CloseAll() []error {
 	r.mu.Lock()
-	defer r.mu.Unlock()
+	snapshot := make([]InfrastructureComponent, 0, len(r.components))
+	for _, c := range r.components {
+		snapshot = append(snapshot, c)
+	}
+	r.components = make(map[string]InfrastructureComponent)
+	r.mu.Unlock()
 
 	var errors []error
-	for name, component := range r.components {
-		if err := component.Close(); err != nil {
-			errors = append(errors, fmt.Errorf("%s: %w", name, err))
+	for _, comp := range snapshot {
+		if err := comp.Close(); err != nil {
+			errors = append(errors, fmt.Errorf("%s: %w", comp.Name(), err))
 		}
 	}
 	return errors

@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
@@ -21,19 +20,22 @@ func GetSystemStats() (map[string]interface{}, error) {
 		return nil, fmt.Errorf("failed to get memory info: %w", err)
 	}
 
-	c, err := cpu.Percent(time.Second, false)
+	// Use cpu.Percent(0, false) instead of cpu.Percent(time.Second, false).
+	// A zero-second interval returns immediately from the OS cache and never blocks,
+	// whereas a 1-second interval sleeps the calling goroutine for the full duration.
+	c, err := cpu.Percent(0, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cpu stats: %w", err)
 	}
 
 	stats := map[string]interface{}{
-		"cpu_percent":         c[0],
-		"memory_total_mb":     v.Total / 1024 / 1024,
-		"memory_used_mb":      v.Used / 1024 / 1024,
-		"memory_used_percent": v.UsedPercent,
-		"go_routines":         runtime.NumGoroutine(),
-		"os":                  runtime.GOOS,
-		"arch":                runtime.GOARCH,
+		"cpu_percent":          c[0],
+		"memory_total_mb":      v.Total / 1024 / 1024,
+		"memory_used_mb":       v.Used / 1024 / 1024,
+		"memory_used_percent":  v.UsedPercent,
+		"go_routines":          runtime.NumGoroutine(),
+		"os":                   runtime.GOOS,
+		"arch":                  runtime.GOARCH,
 	}
 
 	return stats, nil
@@ -164,15 +166,16 @@ func CheckPort(port string) error {
 	return nil
 }
 
-// ShutdownChan is a global shutdown channel for TUI communication
-var ShutdownChan = make(chan struct{})
+// ShutdownChan is a global shutdown signal channel.
+// Buffered so TriggerShutdown() never blocks if no goroutine is currently receiving.
+var ShutdownChan = make(chan struct{}, 1)
 
-// TriggerShutdown sends a shutdown signal to the main thread
+// TriggerShutdown sends a shutdown signal to the main thread.
+// The buffered channel ensures this never blocks, even if no receiver is listening yet.
 func TriggerShutdown() {
 	select {
 	case ShutdownChan <- struct{}{}:
-		// Successfully sent shutdown signal
 	default:
-		// Channel is full or closed, ignore
+		// Already has a pending signal — no need to duplicate
 	}
 }

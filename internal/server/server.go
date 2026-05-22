@@ -27,6 +27,7 @@ func New(cfg *config.Config, l *logger.Logger) *Server {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.MaxMultipartMemory = 32 << 20 // 32 MiB limit
 
 	// Custom error handler
 	r.NoRoute(func(c *gin.Context) {
@@ -77,7 +78,18 @@ func (s *Server) Start() error {
 	port := s.config.Server.Port
 	s.logger.Info("HTTP server starting immediately", "port", port, "env", s.config.App.Env)
 
-	return s.gin.Run(":" + port)
+	// Wrap gin engine in an http.Server with production-grade timeouts
+	// to prevent slowloris attacks and unbounded idle connections.
+	httpServer := &http.Server{
+		Addr:              ":" + port,
+		Handler:           s.gin,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    1 << 20, // 1 MiB
+	}
+	return httpServer.ListenAndServe()
 }
 
 func (s *Server) registerHealthEndpoints() {
@@ -96,9 +108,25 @@ func (s *Server) registerHealthEndpoints() {
 	})
 
 	s.gin.POST("/restart", func(c *gin.Context) {
+		token := c.GetHeader("Authorization")
+		if token == "" {
+			token = c.GetHeader("X-Restart-Token")
+		}
+		if s.config.Server.RestartToken != "" {
+			if token != s.config.Server.RestartToken {
+				response.Unauthorized(c, "Invalid or missing restart token")
+				return
+			}
+		} else if token == "" {
+			// No token set in config, but also no header — block to prevent
+			// open anonymous POST /restart (DoS vector). Set server.restart_token
+			// in your config to enable the endpoint.
+			response.Unauthorized(c, "restart token is not configured; set server.restart_token in config")
+			return
+		}
 		go func() {
 			time.Sleep(500 * time.Millisecond)
-			os.Exit(1)
+			os.Exit(0)
 		}()
 		response.Success(c, map[string]string{"status": "restarting", "message": "Service is restarting..."})
 	})

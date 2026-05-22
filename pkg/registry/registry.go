@@ -5,6 +5,7 @@ import (
 	"stackyrd-nano/config"
 	"stackyrd-nano/pkg/interfaces"
 	"stackyrd-nano/pkg/logger"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,14 +13,19 @@ import (
 // ServiceFactory creates a service instance with dependencies
 type ServiceFactory func(config *config.Config, logger *logger.Logger, deps *Dependencies) interfaces.Service
 
-// Global registry of service factories
-var serviceFactories = make(map[string]ServiceFactory)
+// Global registry of service factories — protected by mu
+var (
+	serviceFactoriesMu sync.RWMutex
+	serviceFactories   = make(map[string]ServiceFactory)
 
-// Global registry of discovered service
-var serviceDiscovered = make(map[string]interface{})
+	serviceDiscoveredMu sync.RWMutex
+	serviceDiscovered   = make(map[string]interface{})
+)
 
 // RegisterService registers a service factory for automatic discovery
 func RegisterService(name string, factory ServiceFactory) {
+	serviceFactoriesMu.Lock()
+	defer serviceFactoriesMu.Unlock()
 	serviceFactories[name] = factory
 }
 
@@ -29,6 +35,9 @@ func AutoDiscoverServices(
 	logger *logger.Logger,
 	deps *Dependencies,
 ) []interfaces.Service {
+	serviceFactoriesMu.RLock()
+	defer serviceFactoriesMu.RUnlock()
+
 	var services []interfaces.Service
 
 	for name, factory := range serviceFactories {
@@ -38,7 +47,9 @@ func AutoDiscoverServices(
 				services = append(services, service)
 				logger.Info("Auto-registered service", "service", name)
 
+				serviceDiscoveredMu.Lock()
 				serviceDiscovered[service.Name()] = service.Get()
+				serviceDiscoveredMu.Unlock()
 			} else {
 				logger.Warn("Service factory returned nil", "service", name)
 			}
@@ -52,6 +63,7 @@ func AutoDiscoverServices(
 
 // ServiceRegistry holds discovered services and manages their lifecycle
 type ServiceRegistry struct {
+	mu      sync.RWMutex
 	services []interfaces.Service
 	logger   *logger.Logger
 }
@@ -64,17 +76,32 @@ func NewServiceRegistry(logger *logger.Logger) *ServiceRegistry {
 	}
 }
 
-// GetServiceFactories returns the global service factories map for testing/debugging
+// GetServiceFactories returns a snapshot copy of the global service factories map for testing/debugging
 func GetServiceFactories() map[string]ServiceFactory {
-	return serviceFactories
+	serviceFactoriesMu.RLock()
+	defer serviceFactoriesMu.RUnlock()
+	copy := make(map[string]ServiceFactory, len(serviceFactories))
+	for k, v := range serviceFactories {
+		copy[k] = v
+	}
+	return copy
 }
 
+// GetService returns a discovered service by name
 func GetService(name string) interface{} {
-	return serviceDiscovered[name]
+	serviceDiscoveredMu.RLock()
+	defer serviceDiscoveredMu.RUnlock()
+	val, ok := serviceDiscovered[name]
+	if !ok {
+		return nil
+	}
+	return val
 }
 
 // Register adds a service to the registry
 func (r *ServiceRegistry) Register(s interfaces.Service) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.services = append(r.services, s)
 }
 
@@ -85,7 +112,7 @@ func (r *ServiceRegistry) RegisterServiceWithDependencies(
 	deps *Dependencies,
 	serviceName string,
 ) error {
-	if factory, exists := serviceFactories[serviceName]; exists {
+	if factory, exists := GetServiceFactories()[serviceName]; exists {
 		if config.Services.IsEnabled(serviceName) {
 			service := factory(config, logger, deps)
 			if service != nil {
@@ -102,9 +129,13 @@ func (r *ServiceRegistry) RegisterServiceWithDependencies(
 	return fmt.Errorf("service factory not found: %s", serviceName)
 }
 
-// GetServices returns the list of registered services
+// GetServices returns a copy of the registered services list
 func (r *ServiceRegistry) GetServices() []interfaces.Service {
-	return r.services
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	list := make([]interfaces.Service, len(r.services))
+	copy(list, r.services)
+	return list
 }
 
 // Boot initializes enabled services and registers their routes
